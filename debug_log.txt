@@ -1,0 +1,18 @@
+Exception: SQLSTATE[01000]: Warning: 1265 Data truncated for column 'product' at row 1
+The SQL being executed was: INSERT INTO `booking` (`name`, `phone`, `email`, `user_id`, `product`, `date`, `belowtenyears`, `abovetenyears`, `no_of_units`, `amount`, `created_date`, `type`, `status`) VALUES ('SANDIPAN SARKAR', '7605825921', 'sarkarsandipan423@gmail.com', 3, '10', '2025-12-07', 0, 1, 1, 1, '2025-12-07 23:42:10', '0', 0)
+#0 /Users/sandipan/Downloads/happyvalley_sandi/vendor/yiisoft/yii2/db/Command.php(1325): yii\db\Schema->convertException(Object(PDOException), 'INSERT INTO `bo...')
+#1 /Users/sandipan/Downloads/happyvalley_sandi/vendor/yiisoft/yii2/db/Command.php(1120): yii\db\Command->internalExecute('INSERT INTO `bo...')
+#2 /Users/sandipan/Downloads/happyvalley_sandi/vendor/yiisoft/yii2/db/Schema.php(431): yii\db\Command->execute()
+#3 /Users/sandipan/Downloads/happyvalley_sandi/vendor/yiisoft/yii2/db/ActiveRecord.php(643): yii\db\Schema->insert('booking', Array)
+#4 /Users/sandipan/Downloads/happyvalley_sandi/vendor/yiisoft/yii2/db/ActiveRecord.php(573): yii\db\ActiveRecord->insertInternal(NULL)
+#5 /Users/sandipan/Downloads/happyvalley_sandi/vendor/yiisoft/yii2/db/BaseActiveRecord.php(700): yii\db\ActiveRecord->insert(true, NULL)
+#6 /Users/sandipan/Downloads/happyvalley_sandi/controllers/ApiBookingController.php(76): yii\db\BaseActiveRecord->save()
+#7 [internal function]: app\controllers\ApiBookingController->actionCreate()
+#8 /Users/sandipan/Downloads/happyvalley_sandi/vendor/yiisoft/yii2/base/InlineAction.php(60): call_user_func_array(Array, Array)
+#9 /Users/sandipan/Downloads/happyvalley_sandi/vendor/yiisoft/yii2/base/Controller.php(187): yii\base\InlineAction->runWithParams(Array)
+#10 /Users/sandipan/Downloads/happyvalley_sandi/vendor/yiisoft/yii2/base/Module.php(552): yii\base\Controller->runAction('create', Array)
+#11 /Users/sandipan/Downloads/happyvalley_sandi/vendor/yiisoft/yii2/web/Application.php(103): yii\base\Module->runAction('api-booking/cre...', Array)
+#12 /Users/sandipan/Downloads/happyvalley_sandi/vendor/yiisoft/yii2/base/Application.php(386): yii\web\Application->handleRequest(Object(yii\web\Request))
+#13 /Users/sandipan/Downloads/happyvalley_sandi/index.php(19): yii\base\Application->run()
+#14 /Users/sandipan/Downloads/happyvalley_sandi/router.php(20): require('/Users/sandipan...')
+#15 {main}

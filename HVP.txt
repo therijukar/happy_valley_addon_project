@@ -1,0 +1,64 @@
+Happy Valley Api Requests
+
+>>Enquiry
+
+{
+	"action":"Enquiry",
+
+	"name":"Amit",
+
+	"phone":"9865321452",
+
+	"email":"sdfa@das.com",
+
+	"product":"1",
+
+	"from_date":"2018-12-31",
+
+	"to_date":"",
+
+	"time":"16:30:00",
+
+	"no_of_people":"4"
+,
+	"no_of_spots":""
+
+}
+
+>> Feedback
+
+{
+
+	"action":"Feedback",
+
+	"name":"Amit",
+
+	"phone":"9865321452",
+
+	"email":"sdfa@das.com",
+
+	"website":"lsdlk@ldf.com",
+
+	"comment":"Wonderful service"
+
+}
+
+>> Booking
+
+{
+
+	"action":"Booking",
+
+	"name":"Amit",
+
+	"phone":"9865321452",
+
+	"email":"sdfa@das.com",
+
+	"no_of_people":"4",
+
+	"amount":"80",
+
+	"date":"2018-12-28"
+
+}

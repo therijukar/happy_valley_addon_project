@@ -1,0 +1,16 @@
+/nbproject/private/
+/vendor/
+/runtime/
+/web/assets/*
+!/web/assets/.gitignore
+*.log
+.DS_Store
+auth.json
+check_schema.php
+fix_dates_and_alter.php
+alter_booking_product.php
+dump_db.php
+.idea/
+*.zip
+web/assets1.zip
+web/assets22/images/images.zip

@@ -1,0 +1,4 @@
+[10-Mar-2024 12:45:33 UTC] PHP Fatal error:  Uncaught Error: Class 'Yii' not found in /home/gohappyvalley/public_html/views/site/index.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/gohappyvalley/public_html/views/site/index.php on line 12

@@ -1,0 +1,82 @@
+{
+  "name": "yiisoft/yii2-app-basic",
+  "description": "Yii 2 Basic Project Template",
+  "keywords": [
+    "yii2",
+    "framework",
+    "basic",
+    "project template"
+  ],
+  "homepage": "http://www.yiiframework.com/",
+  "type": "project",
+  "license": "BSD-3-Clause",
+  "support": {
+    "issues": "https://github.com/yiisoft/yii2/issues?state=open",
+    "forum": "http://www.yiiframework.com/forum/",
+    "wiki": "http://www.yiiframework.com/wiki/",
+    "irc": "irc://irc.freenode.net/yii",
+    "source": "https://github.com/yiisoft/yii2"
+  },
+  "minimum-stability": "dev",
+  "require": {
+    "php": "^7.2",
+    "yiisoft/yii2": "~2.0.45",
+    "yiisoft/yii2-bootstrap": "~2.0.0",
+    "yiisoft/yii2-swiftmailer": "~2.0.0",
+    "sadovojav/yii2-ckeditor": "dev-master",
+    "yiisoft/yii2-jui": "~2.0.0",
+    "razorpay/razorpay": "*",
+    "moonlandsoft/yii2-phpexcel": "*",
+    "kartik-v/yii2-mpdf": "*",
+    "kartik-v/yii2-widget-typeahead": "*",
+    "symfony/polyfill-iconv": "^1.6@dev",
+    "phpoffice/phpword": "^0.15.0@dev",
+    "firebase/php-jwt": "dev-main",
+    "yidas/yii2-bower-asset": "dev-master"
+  },
+  "require-dev": {
+    "yiisoft/yii2-debug": "~2.0.0",
+    "yiisoft/yii2-gii": "~2.0.0",
+    "yiisoft/yii2-faker": "~2.0.0",
+    "codeception/base": "^2.2.3",
+    "codeception/verify": "~0.3.1",
+    "codeception/specify": "~0.4.3"
+  },
+  "config": {
+    "process-timeout": 1800,
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true
+    }
+  },
+  "scripts": {
+    "post-create-project-cmd": [
+      "yii\\composer\\Installer::postCreateProject"
+    ]
+  },
+  "provide": {
+    "bower-asset/jquery": "*",
+    "bower-asset/jquery-ui": "*",
+    "bower-asset/yii2-pjax": "*",
+    "bower-asset/typeahead.js": "*",
+    "bower-asset/punycode": "*",
+    "bower-asset/inputmask": "*"
+  },
+  "extra": {
+    "yii\\composer\\Installer::postCreateProject": {
+      "setPermission": [
+        {
+          "runtime": "0777",
+          "web/assets": "0777",
+          "yii": "0755"
+        }
+      ],
+      "generateCookieValidationKey": [
+        "config/web.php"
+      ]
+    },
+    "asset-installer-paths": {
+      "npm-asset-library": "vendor/npm",
+      "bower-asset-library": "vendor/bower"
+    }
+  }
+}

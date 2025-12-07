@@ -1,0 +1,31 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    environment:
+      YII_DEBUG: "false"
+      YII_ENV: "prod"
+      DB_HOST: "mysql"
+      DB_PORT: "3306"
+      DB_NAME: "happyvalley"
+      DB_USER: "happy"
+      DB_PASS: "happy"
+    depends_on:
+      - mysql
+    volumes:
+      - .:/var/www/html
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: "root"
+      MYSQL_DATABASE: "happyvalley"
+      MYSQL_USER: "happy"
+      MYSQL_PASSWORD: "happy"
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./gohappyvalleycom_webnew.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+volumes:
+  mysql_data:

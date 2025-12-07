@@ -1,0 +1,6 @@
+
+RewriteEngine on
+RewriteCond %{HTTP_HOST} ^webmail\.gohappyvalley\.com$ [OR]
+RewriteCond %{HTTP_HOST} ^www\.webmail\.gohappyvalley\.com$
+RewriteRule ^/?$ "https\:\/\/184\.95\.37\.178\:2096" [R=301,L]
+
