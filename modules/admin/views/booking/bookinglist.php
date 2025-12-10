@@ -30,9 +30,7 @@ $session = Yii::$app->session;
             <div class="ibox">
                 <div class="ibox-title">
                     <h5>All Bookings</h5>
-                    <div style="float:right">
-                        <button id="scanTicketBtn" class="btn btn-success" data-toggle="modal" data-target="#scanModal">Scan Ticket</button>
-                    </div>
+
                 </div>
                 <div class="ibox-content">
                     <div class="table-responsive">
@@ -197,25 +195,7 @@ $session = Yii::$app->session;
 <!-- MODAL ENDS HERE -->
 
 
-<div class="modal fade" id="scanModal" tabindex="-1" role="dialog" aria-labelledby="scanModalLabel">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="scanModalLabel">Scan Ticket QR</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div id="qr-reader" style="width:100%;min-height:300px"></div>
-                <div id="qr-result" class="mt-2"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
- </div>
+
 
 <script>
 
@@ -282,71 +262,57 @@ $session = Yii::$app->session;
     };
 
     $(document).ready(function(){
-        console.log("Booking List: Document Ready. Initializing DataTable...");
 
         $('.dataTables-zone-list').DataTable({
             responsive: true,
             processing: true,
             serverSide: true,
             ajax: {
-                url: '<?= \yii\helpers\Url::to(['/admin/booking/get-booking-data']) ?>',
-                type: 'GET',
-                dataSrc: function (json) {
-                    console.log("Booking List: Data received from server:", json);
-                    return json.data;
-                },
-                error: function (xhr, error, code) {
-                    console.error("Booking List: AJAX Error:", error, code);
-                    console.log(xhr.responseText);
-                    alert("Error loading data. Check console for details.");
-                }
-            },
-            initComplete: function(settings, json) {
-                console.log("Booking List: DataTable Initialization Complete.");
+                url: '/admin/booking/get-booking-data',
+                type: 'GET'
             },
             columns: [
-                { data: 0, title: '#', defaultContent: '-' },
-                { data: 1, title: 'Name', defaultContent: '-' },
-                { data: 2, title: 'Phone Number', defaultContent: '-' },
-                { data: 3, title: 'Booked From', defaultContent: '-' },
-                { data: 4, title: 'Booking Category', defaultContent: '-' },
-                { data: 5, title: 'Below 10 Years', defaultContent: '0' },
-                { data: 6, title: 'Above 10 Years', defaultContent: '0' },
-                { data: 7, title: 'Total Booking', defaultContent: '0' },
-                { data: 8, title: 'Date', defaultContent: '-' },
-                { data: 9, title: 'Ticket No.', defaultContent: '-' },
-                { data: 10, title: 'Transaction Id.', defaultContent: 'N/A' },
-                { data: 11, title: 'Status', defaultContent: '' },
-                { data: 12, title: 'Action', defaultContent: '' },
-                { data: 13, title: 'Verify Booking', defaultContent: '' },
-                { data: 14, title: 'Resend Otp', defaultContent: '' }
+                { data: 0, title: '#' },
+                { data: 1, title: 'Name' },
+                { data: 2, title: 'Phone Number' },
+                { data: 3, title: 'Booked From' },
+                { data: 4, title: 'Booking Category' },
+                { data: 5, title: 'Below 10 Years' },
+                { data: 6, title: 'Above 10 Years' },
+                { data: 7, title: 'Total Booking' },
+                { data: 8, title: 'Date' },
+                { data: 9, title: 'Ticket No.' },
+                { data: 10, title: 'Transaction Id.' },
+                { data: 11, title: 'Status' },
+                { data: 12, title: 'Action' },
+                { data: 13, title: 'Verify Booking' },
+                { data: 14, title: 'Resend Otp' }
             ],
             order: [[0, 'desc']],
-            order: [[0, 'desc']],
-            // pageLength: 10,
-            // lengthMenu: [10, 25, 50, 100],
-            // dom: "<'html5buttons'B>lfrt<'row'<'col-sm-5'i><'col-sm-7'p>>",
-            // buttons: [
-            //     {extend: 'csv',title:'BookingList',exportOptions: {
-            //         columns: [0,5,6]
-            //     }},
-            //     {extend: 'excel', title: 'BookingList',exportOptions: {
-            //         columns: [0,2,3]
-            //     }},
-            //     {extend: 'pdf', title: 'BookingList',exportOptions: {
-            //         columns: [0,2,3]
-            //     }},
-            //     {
-            //         extend: 'print',
-            //         customize: function (win) {
-            //             $(win.document.body).addClass('white-bg');
-            //             $(win.document.body).css('font-size', '10px');
-            //             $(win.document.body).find('table')
-            //                 .addClass('compact')
-            //                 .css('font-size', 'inherit');
-            //         }
-            //     }
-            // ]
+            pageLength: 10,
+            lengthMenu: [10, 25, 50, 100],
+            dom: "<'html5buttons'B>lfrt<'row'<'col-sm-5'i><'col-sm-7'p>>",
+            buttons: [
+                {extend: 'csv',title:'BookingList',exportOptions: {
+                    columns: [0,5,6]
+                }},
+                {extend: 'excel', title: 'BookingList',exportOptions: {
+                    columns: [0,2,3]
+                }},
+                {extend: 'pdf', title: 'BookingList',exportOptions: {
+                    columns: [0,2,3]
+                }},
+                {
+                    extend: 'print',
+                    customize: function (win) {
+                        $(win.document.body).addClass('white-bg');
+                        $(win.document.body).css('font-size', '10px');
+                        $(win.document.body).find('table')
+                            .addClass('compact')
+                            .css('font-size', 'inherit');
+                    }
+                }
+            ]
         });
 
         $('#select_all').on('click',function(){
@@ -390,147 +356,7 @@ $session = Yii::$app->session;
 
     });
 </script>
-<script src="<?= Yii::getAlias('@web') ?>/web/js/html5-qrcode.min.js"></script>
-<script>
-$(function(){
-    var html5QrCode = null;
-    var isScanning = false;
 
-    $('#scanModal').on('shown.bs.modal', function(){
-        console.log("Modal shown event fired.");
-        $(this).removeAttr('aria-hidden').attr('aria-modal','true');
-        $('#qr-result').html('<div class="alert alert-warning">Starting Camera...</div>');
-        
-        if (typeof Html5Qrcode === "undefined") {
-            $('#qr-result').html('<div class="alert alert-danger">Error: Scanner Library not loaded. Check internet connection.</div>');
-            console.error("Html5Qrcode is not defined.");
-            return;
-        }
-        
-        setTimeout(startQRScanner, 500);
-    });
-
-    $('#scanModal').on('hidden.bs.modal', function(){
-        console.log("Modal hidden event fired.");
-        stopScanner();
-    });
-
-    function stopScanner() {
-        if (html5QrCode && isScanning) {
-            html5QrCode.stop().then(function(){
-                console.log("Scanner stopped.");
-                html5QrCode.clear();
-                isScanning = false;
-                $('#qr-reader').empty();
-            }).catch(function(err){ 
-                console.error("Failed to stop scanner", err); 
-                html5QrCode = null; // Force reset
-                isScanning = false;
-            });
-        }
-    }
-
-    function startQRScanner(){
-        // Ensure element is empty before starting
-        $('#qr-reader').empty();
-        
-        // If instance exists but state is weird, destroy it
-        if(html5QrCode) {
-             // If we can't be sure of state, better to re-instantiate
-             // But Html5Qrcode object is cheap to create, usually.
-             html5QrCode = null;
-        }
-
-        html5QrCode = new Html5Qrcode('qr-reader');
-        var config = { fps: 10, qrbox: 250 };
-        
-        // Success callback
-        const onSuccess = function(decodedText, decodedResult) {
-            if(isScanning) {
-                stopScanner(); // Stop scanning immediately
-                $('#qr-result').html('<div class="alert alert-info">Processing: '+decodedText+'</div>');
-                
-                $.ajax({
-                    url: '<?php echo Yii::$app->request->baseUrl . '/admin/booking/get-ticket-details'; ?>',
-                    type: 'POST',
-                    data: { code: decodedText },
-                    dataType: 'json',
-                    headers: {
-                        'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
-                    },
-                     success: function(res){
-                        if (res.success) { 
-                             // Close Scan Modal
-                             $('#scanModal').modal('hide');
-                             
-                             // Open Details Modal
-                             setTimeout(function(){
-                                 $('#ticketDetailBody').html(res.details);
-                                 $('#ticketDetailTitle').text(res.message);
-                                 
-                                 // Add Confirm Button if not visited
-                                 if(!res.is_visited) {
-                                     $('#ticketActionBtn').html('<button type="button" class="btn btn-success btn-lg btn-block" onclick="confirmTicket('+res.booking_id+')">APPROVE ENTRY</button>');
-                                 } else {
-                                     $('#ticketActionBtn').html('<div class="alert alert-danger">TICKET ALREADY USED</div><button type="button" class="btn btn-primary" onclick="location.reload()">Scan Next</button>');
-                                 }
-                                 
-                                 $('#ticketDetailModal').modal('show');
-                             }, 500);
-                        }
-                        else { 
-                            $('#qr-result').html('<div class="alert alert-danger">'+res.message+'</div>'); 
-                        }
-                    },
-                    error: function(xhr, status, error){ 
-                        console.log(xhr.responseText);
-                        $('#qr-result').html('<div class="alert alert-danger">Network Error: ' + error + ' (See Console)</div>'); 
-                    }
-                });
-            }
-        };
-
-        // Start scanning
-        html5QrCode.start({ facingMode: 'environment' }, config, onSuccess)
-        .then(() => {
-             isScanning = true;
-             $('#qr-result').html('<div class="alert alert-success">Scanner Active. Point at QR Code.</div>');
-        })
-        .catch(function(err){
-            html5QrCode.start({ facingMode: 'user' }, config, onSuccess)
-            .then(() => {
-                 isScanning = true;
-                 $('#qr-result').html('<div class="alert alert-success">Scanner Active (Front Cam).</div>');
-            })
-            .catch(function(err){ 
-                $('#qr-result').html('<div class="alert alert-danger">Camera error: '+err+'</div>'); 
-            });
-        });
-    }
-});
-
-function confirmTicket(bookingId) {
-    // Direct approval without confirmation dialog
-    
-    $.ajax({
-        url: '<?php echo Yii::$app->request->baseUrl . '/admin/booking/mark-verified'; ?>',
-        type: 'POST',
-        data: { booking_id: bookingId },
-        dataType: 'json',
-        headers: { 'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content') },
-        success: function(res){
-            if(res.success) {
-                // alert(res.message); // Removed as per user request
-                location.reload();
-            } else {
-                alert("Error: " + res.message);
-            }
-        },
-        error: function(err){
-            alert("Network Error");
-        }
-    });
-}
 </script>
 
 <!-- Ticket Details Modal - Updated Structure -->

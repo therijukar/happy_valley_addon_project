@@ -61,21 +61,6 @@ $config = [
             		],
             ],
         ],
-        'assetManager' => [
-            'bundles' => [
-                'yii\web\JqueryAsset' => [
-                    'sourcePath' => null,   // do not publish the bundle
-                    'basePath' => '@webroot',
-                    'baseUrl' => '@web',
-                    'js' => [
-                        'assets/admin/js/jquery-2.1.1.min.js',
-                    ],
-                    'jsOptions' => [
-                        'position' => \yii\web\View::POS_HEAD,
-                    ]
-                ],
-            ],
-        ],
         'db' => require(__DIR__ . '/db.php'),
 
 

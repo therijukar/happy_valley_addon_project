@@ -107,7 +107,7 @@ $this->title = 'Login - Happy Valley';
     <div id="step-phone">
         <div class="mb-4">
             <label class="form-label text-muted small fw-bold">Mobile Number</label>
-            <input type="tel" class="form-control auth-form" id="phoneNumber" placeholder="9876543210" maxlength="10">
+            <input type="tel" class="form-control auth-form" id="phoneNumber" placeholder="Enter Mobile Number" maxlength="10">
         </div>
         <button class="btn btn-auth-submit" id="sendOtpBtn">Send OTP</button>
         <div class="auth-link">

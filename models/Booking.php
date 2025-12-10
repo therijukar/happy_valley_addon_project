@@ -98,6 +98,11 @@ class Booking extends \yii\db\ActiveRecord
         return $this->hasOne(Payments::className(), ['booking_id' => 'id']);
     }
 
+    public function getUser()
+    {
+        return $this->hasOne(User::className(), ['id' => 'user_id']);
+    }
+
     /**
      * {@inheritdoc}
      * @return BookingQuery the active query used by this AR class.

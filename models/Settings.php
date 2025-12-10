@@ -34,4 +34,10 @@ class Settings extends ActiveRecord
             [['key_name'], 'unique'],
         ];
     }
+
+    public static function getReferralBonus()
+    {
+        $setting = self::findOne(['key_name' => 'referral_bonus']);
+        return $setting ? (float)$setting->value : 0.00;
+    }
 }

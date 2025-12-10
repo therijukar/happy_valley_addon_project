@@ -7,6 +7,7 @@ use app\models\Booking;
 use app\models\Payments;
 use app\models\BookingSearch;
 use app\models\Pricing;
+use app\models\ScanHistory;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -31,6 +32,14 @@ class BookingController extends Controller
                 ],
             ],
         ];
+    }
+
+    public function beforeAction($action)
+    {
+        if (in_array($action->id, ['get-ticket-details', 'mark-verified'])) {
+            $this->enableCsrfValidation = false;
+        }
+        return parent::beforeAction($action);
     }
 
     /**
@@ -142,6 +151,13 @@ class BookingController extends Controller
         // For initial page load, just render the view without data
         return $this->render('bookinglist');
         
+    }
+    
+    public function actionScan()
+    {
+        $this->view->title = 'Scan Tickets - Admin';
+        $this->layout = 'admin'; // Use admin layout
+        return $this->render('scan');
     }
     
     
@@ -677,6 +693,23 @@ class BookingController extends Controller
         }
     }
 
+    private function logScan($ticket, $bookingId, $name, $status)
+    {
+        try {
+            $log = new ScanHistory(); // Using the 'use' statement
+            $log->ticket_no = (string)$ticket;
+            $log->booking_id = $bookingId;
+            $log->customer_name = $name;
+            $log->scan_status = $status;
+            $log->scanned_by = Yii::$app->user->id ?? 0;
+            $log->scanned_at = date('Y-m-d H:i:s');
+            $log->save();
+        } catch (\Exception $e) {
+            // Ignore logging errors to prevent blocking flow
+            Yii::error("Scan Log Error: " . $e->getMessage());
+        }
+    }
+
     public function actionGetTicketDetails()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -687,12 +720,16 @@ class BookingController extends Controller
         $booking = null;
         $data = json_decode($code, true);
         
+        $ticketForLog = $code;
+
         // Handle JSON format
         if (json_last_error() === JSON_ERROR_NONE && is_array($data)) {
             if(isset($data['ticket'])) {
                  $booking = Booking::find()->where(['ticket_no' => $data['ticket']])->one();
+                 $ticketForLog = $data['ticket'];
             } elseif(isset($data['ticket_no'])) {
                  $booking = Booking::find()->where(['ticket_no' => $data['ticket_no']])->one();
+                 $ticketForLog = $data['ticket_no'];
             } elseif(isset($data['booking_id'])) {
                  $booking = Booking::findOne($data['booking_id']);
             }
@@ -701,9 +738,13 @@ class BookingController extends Controller
         }
         
         if (!$booking) {
+            $this->logScan($ticketForLog, null, 'Unknown', 'Invalid');
             return ['success' => false, 'message' => 'Invalid ticket code'];
         }
         
+        $statusLog = ($booking->visited == 1) ? 'Used' : 'Valid';
+        $this->logScan($booking->ticket_no, $booking->id, $booking->name, $statusLog);
+
         $cat = $this->getBookingCategory($booking->product);
         $msg = "
             <div class='text-left'>
@@ -723,7 +764,9 @@ class BookingController extends Controller
             'message' => 'Ticket Found',
             'details' => $msg,
             'booking_id' => $booking->id,
-            'is_visited' => $booking->visited
+            'is_visited' => $booking->visited,
+            'customer_name' => $booking->name,
+            'ticket_no' => $booking->ticket_no
         ];
     }
 
@@ -743,6 +786,13 @@ class BookingController extends Controller
 
         $booking->visited = 1;
         if($booking->save(false)) {
+            $this->logScan($booking->ticket_no, $booking->id, $booking->name, 'Authorized');
+            
+            // Process Referral Reward if applicable
+            if ($booking->user) {
+                $booking->user->processReferralReward();
+            }
+            
             return ['success' => true, 'message' => 'Entry Approved Successfully!'];
         }
         return ['success' => false, 'message' => 'Database Error'];

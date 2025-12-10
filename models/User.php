@@ -37,11 +37,14 @@ class User extends ActiveRecord implements IdentityInterface
     {
         return [
             [['phone', 'auth_key', 'created_at', 'updated_at'], 'required'],
-            [['status', 'created_at', 'updated_at'], 'integer'],
+            [['status', 'created_at', 'updated_at', 'referred_by', 'is_referral_rewarded'], 'integer'],
+            [['wallet_balance'], 'number'],
             [['phone'], 'string', 'max' => 20],
             [['auth_key'], 'string', 'max' => 32],
             [['access_token', 'full_name', 'email_id'], 'string', 'max' => 255],
+            [['referral_code'], 'string', 'max' => 50],
             [['phone'], 'unique'],
+            [['referral_code'], 'unique'],
         ];
     }
 
@@ -117,6 +120,7 @@ class User extends ActiveRecord implements IdentityInterface
                 $this->created_at = time();
                 $this->updated_at = time();
                 $this->generateAuthKey();
+                $this->generateReferralCode();
             } else {
                 $this->updated_at = time();
             }
@@ -130,21 +134,23 @@ class User extends ActiveRecord implements IdentityInterface
         $this->auth_key = Yii::$app->security->generateRandomString();
     }
     
+    public function generateReferralCode()
+    {
+        if (empty($this->referral_code)) {
+            $this->referral_code = strtoupper(substr(md5(uniqid($this->phone, true)), 0, 8));
+            // Ensure uniqueness
+            while (self::findOne(['referral_code' => $this->referral_code])) {
+                $this->referral_code = strtoupper(substr(md5(uniqid($this->phone, true)), 0, 8));
+            }
+        }
+    }
+
     public function generateAccessToken()
     {
        // This logic effectively moves to AuthController to generate JWT
        // But we can store a reference if needed.
     }
-
-    public function generateReferralCode()
-    {
-        $this->referral_code = strtoupper(substr(md5(uniqid($this->phone, true)), 0, 8));
-        // Verify uniqueness
-        while (self::findOne(['referral_code' => $this->referral_code])) {
-            $this->referral_code = strtoupper(substr(md5(uniqid($this->phone, true)), 0, 8));
-        }
-    }
-
+    
     public function getReferrer()
     {
         return $this->hasOne(User::className(), ['id' => 'referred_by']);
@@ -157,6 +163,32 @@ class User extends ActiveRecord implements IdentityInterface
 
     public function getWalletTransactions()
     {
-        return $this->hasMany(WalletTransaction::className(), ['user_id' => 'id']);
+        return $this->hasMany(WalletTransaction::className(), ['user_id' => 'id'])->orderBy(['created_at' => SORT_DESC]);
+    }
+
+    public function processReferralReward() 
+    {
+        if ($this->referred_by && !$this->is_referral_rewarded) {
+            $referrer = $this->referrer;
+            if ($referrer) {
+                 $bonus = Settings::getReferralBonus();
+                 if ($bonus > 0) {
+                     $referrer->wallet_balance += $bonus;
+                     if ($referrer->save()) {
+                         $txn = new WalletTransaction();
+                         $txn->user_id = $referrer->id;
+                         $txn->amount = $bonus;
+                         $txn->type = 'credit';
+                         $txn->description = 'Referral Bonus for ' . $this->phone; 
+                         $txn->created_at = time();
+                         $txn->save();
+                         
+                         $this->is_referral_rewarded = 1;
+                         // Save without validation to avoid re-generating auth keys or other side effects if any
+                         $this->save(false); 
+                     }
+                 }
+            }
+        }
     }
 }

@@ -71,6 +71,7 @@ class AuthController extends Controller
         $otp = $request->post('otp');
         $name = $request->post('name');
         $email = $request->post('email');
+        $referralCode = $request->post('referral_code');
 
         if (empty($phone) || empty($otp) || empty($name)) {
             return ['status' => 'error', 'message' => 'Missing required fields'];
@@ -88,16 +89,12 @@ class AuthController extends Controller
             $user->email_id = $email;
             
             // Handle Referral
-            $refCode = $request->post('referral_code');
-            if (!empty($refCode)) {
-                $referrer = User::findOne(['referral_code' => $refCode]);
+            if (!empty($referralCode)) {
+                $referrer = User::findOne(['referral_code' => $referralCode]);
                 if ($referrer) {
                     $user->referred_by = $referrer->id;
                 }
             }
-            
-            // Generate own referral code
-            $user->generateReferralCode();
 
             if ($user->save()) {
                 return ['status' => 'success', 'user_token' => $this->generateJwt($user->id)];

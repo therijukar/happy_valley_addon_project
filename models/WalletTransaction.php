@@ -38,6 +38,7 @@ class WalletTransaction extends ActiveRecord
             [['amount'], 'number'],
             [['type'], 'string', 'max' => 20],
             [['description'], 'string', 'max' => 255],
+            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['user_id' => 'id']],
         ];
     }
 

@@ -224,8 +224,33 @@ $this->title = 'Book Tickets - Happy Valley';
                         </div>
                     </div>
 
+                    <!-- Wallet Option -->
+                    <div class="col-lg-12" id="wallet-section" style="display:none;">
+                        <div class="form-group bg-light p-3 rounded border">
+                            <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between">
+                                <div>
+                                    <input type="checkbox" class="custom-control-input" id="useWallet" name="use_wallet" value="1" onchange="calculateTotal()">
+                                    <label class="custom-control-label fw-bold mb-0" for="useWallet">Use Wallet Balance</label>
+                                    <small class="d-block text-muted">Available: <span class="text-success fw-bold">₹<span id="walletBal">0.00</span></span></small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="d-block text-muted small">Wallet Deduction</span>
+                                    <span class="fw-bold text-danger">-₹<span id="walletDeduct">0.00</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Final Payable -->
+                    <div class="col-lg-12 mt-2">
+                        <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background: #f8f9fa; border: 1px dashed #ccc;">
+                            <span class="fs-5 fw-bold text-muted">Payable Amount</span>
+                            <span class="fs-3 fw-bold text-primary" id="payableDisplay">₹0.00</span>
+                        </div>
+                    </div>
+
                     <!-- Ticket Label Field (To match homepage design) -->
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 mt-3">
                         <div class="form-group">
                             <input type="text" value="Ticket" class="form-control" readonly>
                         </div>
@@ -255,163 +280,198 @@ function updateLabels() {
     }
 }
 
-function calculateTotal() {
-    let $opt = $('#productSelect option:selected');
-    let mode = $opt.data('mode');
-    let total = 0;
+    function calculateTotal() {
+        let $opt = $('#productSelect option:selected');
+        let mode = $opt.data('mode');
+        let total = 0;
+        
+        updateLabels();
     
-    updateLabels();
-
-    if (mode === 'normal') {
-        $('.normal-inputs').show();
-        $('.water-inputs').hide();
+        if (mode === 'normal') {
+            $('.normal-inputs').show();
+            $('.water-inputs').hide();
+            
+            let price = parseFloat($opt.data('price'));
+            let units = parseInt($('#units').val()) || 0;
+            total = price * units;
+            
+        } else if (mode === 'water') {
+            $('.normal-inputs').hide();
+            $('.water-inputs').show();
+            
+            let priceBaby = parseFloat($opt.data('price-baby'));
+            let priceAdult = parseFloat($opt.data('price-adult'));
+            let babies = parseInt($('#belowtenyears').val()) || 0;
+            let adults = parseInt($('#abovetenyears').val()) || 0;
+            total = (priceBaby * babies) + (priceAdult * adults);
+        }
         
-        let price = parseFloat($opt.data('price'));
-        let units = parseInt($('#units').val()) || 0;
-        total = price * units;
-        
-    } else if (mode === 'water') {
-        $('.normal-inputs').hide();
-        $('.water-inputs').show();
-        
-        let priceBaby = parseFloat($opt.data('price-baby'));
-        let priceAdult = parseFloat($opt.data('price-adult'));
-        let babies = parseInt($('#belowtenyears').val()) || 0;
-        let adults = parseInt($('#abovetenyears').val()) || 0;
-        total = (priceBaby * babies) + (priceAdult * adults);
-    }
-    
-    $('#amountDisplay').val('₹' + total);
-    // Also store raw total for submission check
-    $('#amountDisplay').data('raw-total', total);
-}
+        $('#amountDisplay').val('₹' + total);
+        $('#amountDisplay').data('raw-total', total);
 
-$(document).ready(function() {
-    // Initial State: Verified User Visual
-    $('#userPhoneDisplay').val("Verified User");
+        // Wallet Calculation
+        let walletBal = parseFloat($('#walletBal').text()) || 0;
+        let useWallet = $('#useWallet').is(':checked');
+        let walletDeduct = 0;
+        let payable = total;
 
-    // Fetch Profile
-    const token = localStorage.getItem('user_token');
-    if(token) {
-        $.ajax({
-            url: "<?= Url::to(['api-booking/profile']) ?>",
-            method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token },
-            success: function(res) {
-                if(res.status === 'success' && res.user) {
-                    if(res.user.phone) $('#userPhoneDisplay').val(res.user.phone);
-                    if(res.user.full_name) $('input[name="name"]').val(res.user.full_name);
-                    if(res.user.email_id) {
-                        $('input[name="email"]').val(res.user.email_id).prop('readonly', true);
-                    }
-                }
+        if (useWallet && walletBal > 0) {
+            if (walletBal >= total) {
+                walletDeduct = total;
+                payable = 0;
+            } else {
+                walletDeduct = walletBal;
+                payable = total - walletBal;
             }
-        });
-    }
-
-    // Handle Pending Data/Params
-    const urlParams = new URLSearchParams(window.location.search);
-    const preProduct = urlParams.get('product');
-    let pendingData = <?= $pendingBookingJson ?>;
-    
-    if (!pendingData) {
-        try {
-            const stored = sessionStorage.getItem('pending_booking');
-            if (stored) {
-                pendingData = JSON.parse(stored);
-                sessionStorage.removeItem('pending_booking');
-            }
-        } catch(e) {}
-    }
-    
-    if (pendingData) {
-        if(pendingData.product) $('#productSelect').val(pendingData.product).trigger('change');
-        if(pendingData.name) $('input[name="name"]').val(pendingData.name);
-        if(pendingData.email) $('input[name="email"]').val(pendingData.email);
-        if(pendingData.phone) $('#userPhoneDisplay').val(pendingData.phone); 
-        if(pendingData.date) $('input[name="date"]').val(pendingData.date);
-        
-        if(pendingData.units) $('#units').val(pendingData.units);
-        if(pendingData.below10) $('#belowtenyears').val(pendingData.below10);
-        if(pendingData.above10) $('#abovetenyears').val(pendingData.above10);
-        
-    } else if(preProduct) {
-        $('#productSelect').val(preProduct).trigger('change');
-    }
-
-    $('#productSelect').change(calculateTotal);
-    calculateTotal(); // Initial calc
-
-    // Form Submission
-    $('#bookingForm').submit(function(e) {
-        e.preventDefault();
-        
-        let amount = $('#amountDisplay').data('raw-total');
-        if (!amount || amount <= 0) {
-            alert("Amount must be greater than 0");
-            return;
         }
 
-        let $btn = $('#payBtn');
-        $btn.prop('disabled', true).text('Processing...');
-
-        let formData = {
-            name: $('input[name="name"]').val(),
-            email: $('input[name="email"]').val(),
-            date: $('input[name="date"]').val(), // Standard date input format YYYY-MM-DD
-            product: $('#productSelect').val(),
-            amount: amount,
-            unit: $('#units').val(),
-            belowtenyears: $('#belowtenyears').val(),
-            abovetenyears: $('#abovetenyears').val()
-        };
-
-        $.post("<?= Url::to(['api-booking/create']) ?>", formData, function(res) {
-            if(res.status === 'initiated') {
-                var options = {
-                    "key": res.key_id,
-                    "amount": res.amount * 100, 
-                    "currency": "INR",
-                    "name": "Happy Valley Park",
-                    "description": "Ticket Booking",
-                    "order_id": res.order_id, 
-                    "handler": function (response){
-                        $.post("<?= Url::to(['api-booking/verify']) ?>", {
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_signature: response.razorpay_signature,
-                            booking_id: res.booking_id
-                        }, function(verifyData) {
-                            if(verifyData.status === 'success') {
-                                // Simple Confirmation Alert/Popup as requested
-                                alert("Booking Successful! Ticket #"+verifyData.ticket_no);
-                                window.location.href = "<?= Url::to(['client/dashboard']) ?>";
-                            } else {
-                                alert("Payment Verification Failed: " + verifyData.message);
-                            }
-                        });
-                    },
-                    "prefill": {
-                        "name": res.customer.name,
-                        "email": res.customer.email,
-                        "contact": res.customer.phone
-                    },
-                    "theme": { "color": "#BE151C" } // Match design color
-                };
-                var rzp1 = new Razorpay(options);
-                rzp1.on('payment.failed', function (response){
-                    alert("Payment Failed: " + response.error.description);
-                    $btn.prop('disabled', false).text('Submit');
-                });
-                rzp1.open();
-            } else {
-                alert("Booking Failed: " + (res.message || 'Unknown error'));
-                $btn.prop('disabled', false).text('Submit');
+        $('#walletDeduct').text(walletDeduct.toFixed(2));
+        $('#payableDisplay').text('₹' + payable.toFixed(2));
+        $('#payableDisplay').data('val', payable);
+    }
+    
+    $(document).ready(function() {
+        // Initial State: Verified User Visual
+        $('#userPhoneDisplay').val("Verified User");
+    
+        // Fetch Profile & Wallet
+        const token = localStorage.getItem('user_token');
+        if(token) {
+            $.ajax({
+                url: "<?= Url::to(['api-booking/profile']) ?>",
+                method: 'GET',
+                headers: { 'Authorization': 'Bearer ' + token },
+                success: function(res) {
+                    if(res.status === 'success' && res.user) {
+                        if(res.user.phone) $('#userPhoneDisplay').val(res.user.phone);
+                        if(res.user.full_name) $('input[name="name"]').val(res.user.full_name);
+                        if(res.user.email_id) {
+                            $('input[name="email"]').val(res.user.email_id).prop('readonly', true);
+                        }
+                        // Wallet
+                        let bal = parseFloat(res.user.wallet_balance || 0);
+                        if(bal > 0) {
+                            $('#walletBal').text(bal.toFixed(2));
+                            $('#wallet-section').show();
+                        }
+                    }
+                }
+            });
+        }
+    
+        // Handle Pending Data/Params
+        const urlParams = new URLSearchParams(window.location.search);
+        const preProduct = urlParams.get('product');
+        let pendingData = <?= $pendingBookingJson ?>;
+        
+        if (!pendingData) {
+            try {
+                const stored = sessionStorage.getItem('pending_booking');
+                if (stored) {
+                    pendingData = JSON.parse(stored);
+                    sessionStorage.removeItem('pending_booking');
+                }
+            } catch(e) {}
+        }
+        
+        if (pendingData) {
+            if(pendingData.product) $('#productSelect').val(pendingData.product).trigger('change');
+            if(pendingData.name) $('input[name="name"]').val(pendingData.name);
+            if(pendingData.email) $('input[name="email"]').val(pendingData.email);
+            if(pendingData.phone) $('#userPhoneDisplay').val(pendingData.phone); 
+            if(pendingData.date) $('input[name="date"]').val(pendingData.date);
+            
+            if(pendingData.units) $('#units').val(pendingData.units);
+            if(pendingData.below10) $('#belowtenyears').val(pendingData.below10);
+            if(pendingData.above10) $('#abovetenyears').val(pendingData.above10);
+            
+        } else if(preProduct) {
+            $('#productSelect').val(preProduct).trigger('change');
+        }
+    
+        $('#productSelect').change(calculateTotal);
+        // Bind inputs
+        $('#units, #belowtenyears, #abovetenyears').on('change keyup', calculateTotal);
+        calculateTotal(); 
+    
+        // Form Submission
+        $('#bookingForm').submit(function(e) {
+            e.preventDefault();
+            
+            let amount = $('#amountDisplay').data('raw-total');
+            if (!amount || amount <= 0) {
+                alert("Amount must be greater than 0");
+                return;
             }
-        }).fail(function() {
-            alert("Network Error");
-            $btn.prop('disabled', false).text('Submit');
+    
+            let $btn = $('#payBtn');
+            $btn.prop('disabled', true).text('Processing...');
+    
+            let formData = {
+                name: $('input[name="name"]').val(),
+                email: $('input[name="email"]').val(),
+                date: $('input[name="date"]').val(), 
+                product: $('#productSelect').val(),
+                amount: amount,
+                unit: $('#units').val(),
+                belowtenyears: $('#belowtenyears').val(),
+                abovetenyears: $('#abovetenyears').val(),
+                use_wallet: $('#useWallet').is(':checked') ? 1 : 0
+            };
+    
+            $.post("<?= Url::to(['api-booking/create']) ?>", formData, function(res) {
+                // SUCCESS (Full Wallet Payment)
+                if(res.status === 'success') {
+                     alert(res.message + "\nTicket #" + res.ticket_no);
+                     window.location.href = "<?= Url::to(['client/dashboard']) ?>";
+                     return;
+                }
+
+                // INITIATED (Partial/Online Payment)
+                if(res.status === 'initiated') {
+                    var options = {
+                        "key": res.key_id,
+                        "amount": res.amount * 100, 
+                        "currency": "INR",
+                        "name": "Happy Valley Park",
+                        "description": "Ticket Booking",
+                        "order_id": res.order_id, 
+                        "handler": function (response){
+                            $.post("<?= Url::to(['api-booking/verify']) ?>", {
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_signature: response.razorpay_signature,
+                                booking_id: res.booking_id
+                            }, function(verifyData) {
+                                if(verifyData.status === 'success') {
+                                    alert("Booking Successful! Ticket #"+verifyData.ticket_no);
+                                    window.location.href = "<?= Url::to(['client/dashboard']) ?>";
+                                } else {
+                                    alert("Payment Verification Failed: " + verifyData.message);
+                                }
+                            });
+                        },
+                        "prefill": {
+                            "name": res.customer.name,
+                            "email": res.customer.email,
+                            "contact": res.customer.phone
+                        },
+                        "theme": { "color": "#BE151C" } 
+                    };
+                    var rzp1 = new Razorpay(options);
+                    rzp1.on('payment.failed', function (response){
+                        alert("Payment Failed: " + response.error.description);
+                        $btn.prop('disabled', false).text('Submit');
+                    });
+                    rzp1.open();
+                } else {
+                    alert("Booking Failed: " + (res.message || 'Unknown error'));
+                    $btn.prop('disabled', false).text('Submit');
+                }
+            }).fail(function() {
+                alert("Network Error");
+                $btn.prop('disabled', false).text('Submit');
+            });
         });
     });
-});
 </script>

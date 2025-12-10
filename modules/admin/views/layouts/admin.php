@@ -31,9 +31,7 @@ AppAdminAsset::register($this);
     <link rel="stylesheet" type="text/css" href="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/css/jquery.timepicker.css" />
     
     <!-- Essential Scripts (Must be in head for inline view scripts) -->
-    <!-- Essential Scripts (Must be in head for inline view scripts) -->
-    <!-- Essential Scripts (Must be in head for inline view scripts) -->
-    <!-- Scripts are now loaded via AppAdminAsset -->
+    <script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/jquery-2.1.1.min.js"></script>
 
     <?= Html::csrfMetaTags() ?>
     <?php $this->head() ?>
@@ -68,9 +66,14 @@ if (!isset($session['administrator']['administratorid'])) {
                     <span>Dashboard</span>
                 </a>
                 
-                <a href="<?= Yii::$app->homeUrl . 'admin/booking/list' ?>" class="nav-link <?= strstr($_SERVER['REQUEST_URI'], "booking") ? 'active' : '' ?>">
+                <a href="<?= Yii::$app->homeUrl . 'admin/booking/list' ?>" class="nav-link <?= strstr($_SERVER['REQUEST_URI'], "booking/list") ? 'active' : '' ?>">
                     <i class="fas fa-ticket-alt"></i>
                     <span>Tickets</span>
+                </a>
+
+                <a href="<?= Yii::$app->homeUrl . 'admin/booking/scan' ?>" class="nav-link <?= strstr($_SERVER['REQUEST_URI'], "booking/scan") ? 'active' : '' ?>">
+                    <i class="fas fa-qrcode"></i>
+                    <span>Scan Ticket</span>
                 </a>
 
                 <div class="nav-label" style="margin-top: 24px;">Management</div>
@@ -116,6 +119,11 @@ if (!isset($session['administrator']['administratorid'])) {
                     <i class="fas fa-address-book"></i>
                     <span>Contacts</span>
                 </a>
+                
+                <a href="<?= \yii\helpers\Url::to(['/admin/settings/index']) ?>" class="nav-link <?= strstr($_SERVER['REQUEST_URI'], "settings") ? 'active' : '' ?>">
+                    <i class="fas fa-cogs"></i>
+                    <span>Settings</span>
+                </a>
             </nav>
         </div>
     </aside>
@@ -154,7 +162,18 @@ if (!isset($session['administrator']['administratorid'])) {
     </div>
 </div>
 
-<!-- Scripts moved to head -->
+<!-- Essential Scripts -->
+<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/bootstrap.min.js"></script>
+
+<!-- Plugin Scripts -->
+<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/plugins/metisMenu/jquery.metisMenu.js"></script>
+<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/plugins/dataTables/datatables.min.js"></script>
+<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/plugins/select2/select2.full.min.js"></script>
+<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/plugins/datapicker/bootstrap-datepicker.js"></script>
+<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/jquery.timepicker.js"></script>
+<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/plugins/chartJs/Chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.6.1/clipboard.min.js"></script>
 
 <script>
     // New Mobile Sidebar Toggle Logic

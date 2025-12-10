@@ -161,13 +161,15 @@ $(document).ready(function() {
         });
     });
 
-    let referralCode = new URLSearchParams(window.location.search).get('ref');
-
     $('#registerBtn').click(function() {
         let name = $('#uName').val();
         let email = $('#uEmail').val();
         let phone = $('#uPhone').val();
         let otp = $('#otpInput').val();
+        
+        // Get Referral Code from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const referralCode = urlParams.get('ref');
         
         if(!otp) return;
 

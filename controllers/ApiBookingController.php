@@ -11,8 +11,6 @@ use app\models\Payments;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Razorpay\Api\Api;
-use app\models\Settings;
-use app\models\WalletTransaction;
 
 class ApiBookingController extends Controller
 {
@@ -99,22 +97,73 @@ class ApiBookingController extends Controller
                     return ['status' => 'error', 'message' => 'DB Save Failed'];
                 }
                 
+                // Wallet Payment Logic
+                $totalAmount = $model->amount;
+                $walletDeduct = 0;
+                $payable = $totalAmount;
+                $useWallet = $params['use_wallet'] ?? false;
+                
+                if ($useWallet && $user->wallet_balance > 0) {
+                    if ($user->wallet_balance >= $totalAmount) {
+                        $walletDeduct = $totalAmount;
+                        $payable = 0;
+                    } else {
+                        $walletDeduct = $user->wallet_balance;
+                        $payable = $totalAmount - $user->wallet_balance;
+                    }
+                }
+
                 // Create Payments record
                 $payment = new Payments();
                 $payment->booking_id = $model->id;
-                $payment->amount = $model->amount;
+                $payment->amount = $payable; // External Payment Amount
+                $payment->wallet_amount = $walletDeduct; // Wallet Amount
                 if(!$payment->save()) {
                      file_put_contents('debug_log.txt', "Payment Save Failed: " . print_r($payment->errors, true), FILE_APPEND);
                 }
     
-                // Generate Ticket Number (to be confirmed by webhook)
+                // Generate Ticket Number
                 $num = rand(1000,9999);
                 $string = '';
                 for ($i=0; $i < 5; $i++) { 
                      $string = $string.chr(rand(65,90));
                 }
                 $ticket = $string.(string)($num);
-    
+
+                // Case 1: Full Payment via Wallet
+                if ($payable == 0 && $walletDeduct > 0) {
+                    // Update Booking
+                    $model->status = 1;
+                    $model->ticket_no = $ticket;
+                    $model->save();
+                    
+                    // Update Payment
+                    $payment->status = 'success';
+                    $payment->txn_id = 'WALLET_' . time();
+                    $payment->save();
+                    
+                    // Deduct Wallet
+                    $user->wallet_balance -= $walletDeduct;
+                    $user->save(false);
+                    
+                    // Log Transaction
+                    $txn = new \app\models\WalletTransaction();
+                    $txn->user_id = $user->id;
+                    $txn->amount = $walletDeduct;
+                    $txn->type = 'debit';
+                    $txn->description = 'Payment for Booking #' . $model->id;
+                    $txn->created_at = time();
+                    $txn->save();
+                    
+                    return [
+                        'status' => 'success',
+                        'message' => 'Booking Successful via Wallet',
+                        'booking_id' => $model->id,
+                        'ticket_no' => $ticket
+                    ];
+                }
+
+                // Case 2: Partial or Full Online Payment
                 // Razorpay Order Creation
                 $keyId = 'rzp_live_JnKcmAb28MNsO6';
                 $keySecret = 'E07BXooQBUw0ohmVBegkRZ22';
@@ -122,7 +171,7 @@ class ApiBookingController extends Controller
     
                 $orderData = [
                     'receipt' => (string)$model->id,
-                    'amount' => $model->amount * 100, // paise
+                    'amount' => $payable * 100, // paise
                     'currency' => 'INR',
                     'payment_capture' => 1,
                     'notes' => [
@@ -138,8 +187,8 @@ class ApiBookingController extends Controller
                 return [
                     'status' => 'initiated',
                     'order_id' => $razorpayOrder['id'],
-                    'key_id' => $keyId, // useful for client
-                    'amount' => $model->amount,
+                    'key_id' => $keyId, 
+                    'amount' => $payable, // ONLY Payable amount
                     'currency' => 'INR',
                     'booking_id' => $model->id,
                     'customer' => [
@@ -193,38 +242,30 @@ class ApiBookingController extends Controller
                 }
                 $booking->save();
                 
+                // Update Payment Record
+                $payment = Payments::findOne(['booking_id' => $bookingId]);
                 if($payment) {
                     $payment->txn_id = $paymentId;
                     $payment->status = 'success';
                     $payment->save();
-                }
-
-                // --- Referral Logic ---
-                $currUser = User::findOne($user->id); // Refresh
-                if ($currUser->referred_by && !$currUser->is_referral_rewarded) {
-                    $referrer = User::findOne($currUser->referred_by);
-                    if ($referrer) {
-                        $bonusSetting = Settings::findOne(['key_name' => 'referral_bonus']);
-                        $amount = $bonusSetting ? floatval($bonusSetting->value) : 10.00;
+                    
+                    // Deduct Wallet Amount if Partial Payment
+                    if ($payment->wallet_amount > 0) {
+                        $user->wallet_balance -= $payment->wallet_amount;
+                        $user->save(false);
                         
-                        $referrer->wallet_balance += $amount;
-                        if ($referrer->save()) {
-                            // Log Transaction
-                            $txn = new WalletTransaction();
-                            $txn->user_id = $referrer->id;
-                            $txn->amount = $amount;
-                            $txn->type = 'credit';
-                            $txn->description = 'Referral Bonus for user: ' . $currUser->phone;
-                            $txn->created_at = time();
-                            $txn->save();
-                            
-                            // Mark rewarded
-                            $currUser->is_referral_rewarded = 1;
-                            $currUser->save();
-                        }
+                        $txn = new \app\models\WalletTransaction();
+                        $txn->user_id = $user->id;
+                        $txn->amount = $payment->wallet_amount;
+                        $txn->type = 'debit';
+                        $txn->description = 'Partial Payment for Booking #' . $booking->id;
+                        $txn->created_at = time();
+                        $txn->save();
                     }
                 }
-                // ---------------------
+
+                // Process Referral Reward
+                $user->processReferralReward();
 
                 return ['status' => 'success', 'message' => 'Payment verified and Ticket generated', 'ticket_no' => $booking->ticket_no];
             }
@@ -260,11 +301,52 @@ class ApiBookingController extends Controller
                 'product' => $booking->product,
                 'amount' => $booking->amount,
                 'date' => $booking->date,
+                'visited' => $booking->visited, // Include visited status
                 'qr_code_url' => "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . rawurlencode(json_encode(['booking_id'=>$booking->id, 'ticket'=>$booking->ticket_no]))
             ];
         }
 
         return ['status' => 'success', 'tickets' => $result];
+    }
+
+    // New Action for Ticket Redemption (Scanner calls this)
+    public function actionRedeem()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        
+        // This endpoint might be called by an Admin/Gatekeeper app
+        // For simplicity, we assume Basic Auth or just open for now with POST params
+        // Ideally, this should require Admin Authentication.
+        
+        $request = Yii::$app->request;
+        $ticketNo = $request->post('ticket_no');
+        $bookingId = $request->post('booking_id');
+
+        if (!$ticketNo) {
+            return ['status' => 'error', 'message' => 'Ticket number required'];
+        }
+
+        // Find booking
+        $query = Booking::find()->where(['ticket_no' => $ticketNo, 'status' => 1]);
+        if($bookingId) {
+             $query->andWhere(['id' => $bookingId]);
+        }
+        $booking = $query->one();
+
+        if (!$booking) {
+            return ['status' => 'error', 'message' => 'Invalid or Unpaid Ticket'];
+        }
+
+        if ($booking->visited == 1) {
+             return ['status' => 'error', 'message' => 'Ticket Already Used / Redeemed'];
+        }
+
+        $booking->visited = 1;
+        if ($booking->save()) {
+             return ['status' => 'success', 'message' => 'Ticket Verified Successfully'];
+        } else {
+             return ['status' => 'error', 'message' => 'Failed to redeem ticket'];
+        }
     }
 
     public function actionProfile()
@@ -276,8 +358,9 @@ class ApiBookingController extends Controller
                 'phone' => $user->phone,
                 'full_name' => $user->full_name,
                 'email_id' => $user->email_id,
-                'referral_code' => $user->referral_code,
                 'wallet_balance' => $user->wallet_balance,
+                'referral_code' => $user->referral_code,
+                'transactions' => $user->getWalletTransactions()->limit(5)->all()
             ]];
         }
         return ['status' => 'error', 'message' => 'User not found'];
@@ -288,22 +371,5 @@ class ApiBookingController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
         $pricing = \app\models\Pricing::find()->all();
         return ['status' => 'success', 'pricing' => $pricing];
-    }
-    public function actionWalletHistory()
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        $user = $this->getAuthenticatedUser();
-        if (!$user) {
-            Yii::$app->response->statusCode = 401;
-            return ['status' => 'error', 'message' => 'Unauthorized'];
-        }
-        
-        $txns = WalletTransaction::find()
-            ->where(['user_id' => $user->id])
-            ->orderBy(['created_at' => SORT_DESC])
-            ->limit(50)
-            ->all();
-            
-        return ['status' => 'success', 'transactions' => $txns];
     }
 }

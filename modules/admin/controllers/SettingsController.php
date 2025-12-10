@@ -8,31 +8,29 @@ use app\models\Settings;
 
 class SettingsController extends Controller
 {
+    public $layout = 'admin';
+
     public function actionIndex()
     {
-        $this->layout = 'admin';
-        
         if (Yii::$app->request->isPost) {
-            $value = Yii::$app->request->post('referral_bonus');
+            $bonus = Yii::$app->request->post('referral_bonus');
             $setting = Settings::findOne(['key_name' => 'referral_bonus']);
             if (!$setting) {
                 $setting = new Settings();
                 $setting->key_name = 'referral_bonus';
             }
-            $setting->value = $value;
+            $setting->value = (string)$bonus;
             if ($setting->save()) {
-                Yii::$app->session->setFlash('success', 'Settings updated successfully.');
+                Yii::$app->session->setFlash('success', 'Settings saved successfully.');
             } else {
-                Yii::$app->session->setFlash('error', 'Failed to update settings.');
+                Yii::$app->session->setFlash('error', 'Failed to save settings.');
             }
-            return $this->refresh();
         }
 
-        $referralBonus = Settings::findOne(['key_name' => 'referral_bonus']);
-        $referralBonusValue = $referralBonus ? $referralBonus->value : 0;
+        $referralBonus = Settings::getReferralBonus();
 
         return $this->render('index', [
-            'referralBonus' => $referralBonusValue,
+            'referralBonus' => $referralBonus,
         ]);
     }
 }
