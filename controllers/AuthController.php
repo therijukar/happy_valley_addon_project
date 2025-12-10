@@ -170,8 +170,8 @@ class AuthController extends Controller
             'authorization' => $apiKey,
             'route' => 'dlt',
             'sender_id' => 'RYLTHR',
-            'message' => '167170',
-            'variables_values' => $otp, // Variable for the OTP in the template
+            'message' => '204859',
+            'variables_values' => $otp, 
             'flash' => 0,
             'numbers' => $phone,
         ];
