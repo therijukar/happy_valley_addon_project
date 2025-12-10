@@ -117,6 +117,40 @@ $this->title = 'My Tickets - Happy Valley';
     <a href="<?= Url::to(['client/book']) ?>" class="btn btn-primary px-4 py-2 fw-medium rounded-pill shadow-sm">
         <i class="fas fa-plus me-2"></i>Book New Ticket
     </a>
+    </a>
+</div>
+
+<!-- Wallet & Referral Section -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-3 mb-md-0">
+        <div class="p-4 bg-white rounded-3 shadow-sm h-100 border border-light">
+            <div class="d-flex align-items-center mb-2">
+                <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3 text-primary">
+                    <i class="fas fa-wallet fa-lg"></i>
+                </div>
+                <h5 class="text-muted mb-0">Wallet Balance</h5>
+            </div>
+            <h2 class="text-primary fw-bold mb-0 ps-5">₹<span id="walletBalance">0.00</span></h2>
+            <small class="text-muted ps-5 d-block mt-1">Use this for your next booking</small>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="p-4 bg-white rounded-3 shadow-sm h-100 border border-light">
+            <div class="d-flex align-items-center mb-2">
+                 <div class="bg-success bg-opacity-10 p-2 rounded-circle me-3 text-success">
+                    <i class="fas fa-gift fa-lg"></i>
+                </div>
+                <h5 class="text-muted mb-0">Refer & Earn</h5>
+            </div>
+            <p class="small text-muted mb-2 ps-5">Share this link to earn bonus on their first booking!</p>
+            <div class="input-group ps-5">
+                <input type="text" class="form-control bg-light" id="referralCode" readonly value="Loading..." style="font-size: 0.9rem;">
+                <button class="btn btn-outline-primary" type="button" onclick="copyReferral()">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Loading State -->
@@ -150,13 +184,44 @@ $(document).ready(function() {
             method: 'GET',
             headers: { 'Authorization': 'Bearer ' + userToken },
             success: function(res) {
-                if(res.status === 'success' && res.user && res.user.full_name) {
-                    $('#welcomeName').text(res.user.full_name);
-                } else if (res.user && res.user.phone) {
-                    $('#welcomeName').text(res.user.phone);
+                if(res.status === 'success' && res.user) {
+                    if(res.user.full_name) $('#welcomeName').text(res.user.full_name);
+                    else if (res.user.phone) $('#welcomeName').text(res.user.phone);
+                    
+                    // Wallet
+                    if(res.user.wallet_balance !== undefined) {
+                        $('#walletBalance').text(res.user.wallet_balance);
+                    }
+                    
+                    // Referral
+                    if(res.user.referral_code) {
+                        // Construct Signup URL with ref param
+                        // Assumes current host
+                        var baseUrl = window.location.protocol + "//" + window.location.host + "<?= Url::to(['client/signup']) ?>";
+                        var refLink = baseUrl + "?ref=" + res.user.referral_code;
+                        $('#referralCode').val(refLink);
+                    }
                 }
             }
         });
+    }
+
+    // Copy Function
+    window.copyReferral = function() {
+        var copyText = document.getElementById("referralCode");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); 
+        document.execCommand("copy");
+        
+        // Visual Feedback
+        var btn = $(copyText).next('button');
+        var original = btn.html();
+        btn.html('<i class="fas fa-check"></i>');
+        btn.removeClass('btn-outline-primary').addClass('btn-success');
+        setTimeout(function() {
+            btn.html(original);
+            btn.removeClass('btn-success').addClass('btn-outline-primary');
+        }, 2000);
     }
 
     // 2. Fetch Tickets

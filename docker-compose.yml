@@ -26,6 +26,6 @@ services:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./gohappyvalleycom_webnew.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./gohappyvalley_webnew.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
 volumes:
   mysql_data:

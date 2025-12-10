@@ -135,4 +135,28 @@ class User extends ActiveRecord implements IdentityInterface
        // This logic effectively moves to AuthController to generate JWT
        // But we can store a reference if needed.
     }
+
+    public function generateReferralCode()
+    {
+        $this->referral_code = strtoupper(substr(md5(uniqid($this->phone, true)), 0, 8));
+        // Verify uniqueness
+        while (self::findOne(['referral_code' => $this->referral_code])) {
+            $this->referral_code = strtoupper(substr(md5(uniqid($this->phone, true)), 0, 8));
+        }
+    }
+
+    public function getReferrer()
+    {
+        return $this->hasOne(User::className(), ['id' => 'referred_by']);
+    }
+
+    public function getReferredUsers()
+    {
+        return $this->hasMany(User::className(), ['referred_by' => 'id']);
+    }
+
+    public function getWalletTransactions()
+    {
+        return $this->hasMany(WalletTransaction::className(), ['user_id' => 'id']);
+    }
 }

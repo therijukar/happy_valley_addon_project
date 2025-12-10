@@ -31,7 +31,7 @@
     "kartik-v/yii2-widget-typeahead": "*",
     "symfony/polyfill-iconv": "^1.6@dev",
     "phpoffice/phpword": "^0.15.0@dev",
-    "firebase/php-jwt": "dev-main",
+    "firebase/php-jwt": "^6.0",
     "yidas/yii2-bower-asset": "dev-master"
   },
   "require-dev": {
@@ -76,7 +76,7 @@
     },
     "asset-installer-paths": {
       "npm-asset-library": "vendor/npm",
-      "bower-asset-library": "vendor/bower"
+      "bower-asset-library": "@vendor/yidas/yii2-bower-asset/bower"
     }
   }
 }

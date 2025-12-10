@@ -31,7 +31,9 @@ AppAdminAsset::register($this);
     <link rel="stylesheet" type="text/css" href="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/css/jquery.timepicker.css" />
     
     <!-- Essential Scripts (Must be in head for inline view scripts) -->
-    <script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/jquery-2.1.1.min.js"></script>
+    <!-- Essential Scripts (Must be in head for inline view scripts) -->
+    <!-- Essential Scripts (Must be in head for inline view scripts) -->
+    <!-- Scripts are now loaded via AppAdminAsset -->
 
     <?= Html::csrfMetaTags() ?>
     <?php $this->head() ?>
@@ -152,18 +154,7 @@ if (!isset($session['administrator']['administratorid'])) {
     </div>
 </div>
 
-<!-- Essential Scripts -->
-<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/bootstrap.min.js"></script>
-
-<!-- Plugin Scripts -->
-<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/plugins/metisMenu/jquery.metisMenu.js"></script>
-<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
-<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/plugins/dataTables/datatables.min.js"></script>
-<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/plugins/select2/select2.full.min.js"></script>
-<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/plugins/datapicker/bootstrap-datepicker.js"></script>
-<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/jquery.timepicker.js"></script>
-<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/plugins/chartJs/Chart.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.6.1/clipboard.min.js"></script>
+<!-- Scripts moved to head -->
 
 <script>
     // New Mobile Sidebar Toggle Logic

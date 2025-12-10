@@ -86,6 +86,19 @@ class AuthController extends Controller
             $user->phone = $phone;
             $user->full_name = $name;
             $user->email_id = $email;
+            
+            // Handle Referral
+            $refCode = $request->post('referral_code');
+            if (!empty($refCode)) {
+                $referrer = User::findOne(['referral_code' => $refCode]);
+                if ($referrer) {
+                    $user->referred_by = $referrer->id;
+                }
+            }
+            
+            // Generate own referral code
+            $user->generateReferralCode();
+
             if ($user->save()) {
                 return ['status' => 'success', 'user_token' => $this->generateJwt($user->id)];
             } else {

@@ -11,6 +11,8 @@ use app\models\Payments;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Razorpay\Api\Api;
+use app\models\Settings;
+use app\models\WalletTransaction;
 
 class ApiBookingController extends Controller
 {
@@ -191,13 +193,38 @@ class ApiBookingController extends Controller
                 }
                 $booking->save();
                 
-                // Update Payment Record
-                $payment = Payments::findOne(['booking_id' => $bookingId]);
                 if($payment) {
                     $payment->txn_id = $paymentId;
                     $payment->status = 'success';
                     $payment->save();
                 }
+
+                // --- Referral Logic ---
+                $currUser = User::findOne($user->id); // Refresh
+                if ($currUser->referred_by && !$currUser->is_referral_rewarded) {
+                    $referrer = User::findOne($currUser->referred_by);
+                    if ($referrer) {
+                        $bonusSetting = Settings::findOne(['key_name' => 'referral_bonus']);
+                        $amount = $bonusSetting ? floatval($bonusSetting->value) : 10.00;
+                        
+                        $referrer->wallet_balance += $amount;
+                        if ($referrer->save()) {
+                            // Log Transaction
+                            $txn = new WalletTransaction();
+                            $txn->user_id = $referrer->id;
+                            $txn->amount = $amount;
+                            $txn->type = 'credit';
+                            $txn->description = 'Referral Bonus for user: ' . $currUser->phone;
+                            $txn->created_at = time();
+                            $txn->save();
+                            
+                            // Mark rewarded
+                            $currUser->is_referral_rewarded = 1;
+                            $currUser->save();
+                        }
+                    }
+                }
+                // ---------------------
 
                 return ['status' => 'success', 'message' => 'Payment verified and Ticket generated', 'ticket_no' => $booking->ticket_no];
             }
@@ -249,6 +276,8 @@ class ApiBookingController extends Controller
                 'phone' => $user->phone,
                 'full_name' => $user->full_name,
                 'email_id' => $user->email_id,
+                'referral_code' => $user->referral_code,
+                'wallet_balance' => $user->wallet_balance,
             ]];
         }
         return ['status' => 'error', 'message' => 'User not found'];
@@ -259,5 +288,22 @@ class ApiBookingController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
         $pricing = \app\models\Pricing::find()->all();
         return ['status' => 'success', 'pricing' => $pricing];
+    }
+    public function actionWalletHistory()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            Yii::$app->response->statusCode = 401;
+            return ['status' => 'error', 'message' => 'Unauthorized'];
+        }
+        
+        $txns = WalletTransaction::find()
+            ->where(['user_id' => $user->id])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->limit(50)
+            ->all();
+            
+        return ['status' => 'success', 'transactions' => $txns];
     }
 }

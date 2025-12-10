@@ -282,57 +282,71 @@ $session = Yii::$app->session;
     };
 
     $(document).ready(function(){
+        console.log("Booking List: Document Ready. Initializing DataTable...");
 
         $('.dataTables-zone-list').DataTable({
             responsive: true,
             processing: true,
             serverSide: true,
             ajax: {
-                url: '/admin/booking/get-booking-data',
-                type: 'GET'
+                url: '<?= \yii\helpers\Url::to(['/admin/booking/get-booking-data']) ?>',
+                type: 'GET',
+                dataSrc: function (json) {
+                    console.log("Booking List: Data received from server:", json);
+                    return json.data;
+                },
+                error: function (xhr, error, code) {
+                    console.error("Booking List: AJAX Error:", error, code);
+                    console.log(xhr.responseText);
+                    alert("Error loading data. Check console for details.");
+                }
+            },
+            initComplete: function(settings, json) {
+                console.log("Booking List: DataTable Initialization Complete.");
             },
             columns: [
-                { data: 0, title: '#' },
-                { data: 1, title: 'Name' },
-                { data: 2, title: 'Phone Number' },
-                { data: 3, title: 'Booked From' },
-                { data: 4, title: 'Booking Category' },
-                { data: 5, title: 'Below 10 Years' },
-                { data: 6, title: 'Above 10 Years' },
-                { data: 7, title: 'Total Booking' },
-                { data: 8, title: 'Date' },
-                { data: 9, title: 'Ticket No.' },
-                { data: 10, title: 'Transaction Id.' },
-                { data: 11, title: 'Status' },
-                { data: 12, title: 'Action' },
-                { data: 13, title: 'Verify Booking' },
-                { data: 14, title: 'Resend Otp' }
+                { data: 0, title: '#', defaultContent: '-' },
+                { data: 1, title: 'Name', defaultContent: '-' },
+                { data: 2, title: 'Phone Number', defaultContent: '-' },
+                { data: 3, title: 'Booked From', defaultContent: '-' },
+                { data: 4, title: 'Booking Category', defaultContent: '-' },
+                { data: 5, title: 'Below 10 Years', defaultContent: '0' },
+                { data: 6, title: 'Above 10 Years', defaultContent: '0' },
+                { data: 7, title: 'Total Booking', defaultContent: '0' },
+                { data: 8, title: 'Date', defaultContent: '-' },
+                { data: 9, title: 'Ticket No.', defaultContent: '-' },
+                { data: 10, title: 'Transaction Id.', defaultContent: 'N/A' },
+                { data: 11, title: 'Status', defaultContent: '' },
+                { data: 12, title: 'Action', defaultContent: '' },
+                { data: 13, title: 'Verify Booking', defaultContent: '' },
+                { data: 14, title: 'Resend Otp', defaultContent: '' }
             ],
             order: [[0, 'desc']],
-            pageLength: 10,
-            lengthMenu: [10, 25, 50, 100],
-            dom: "<'html5buttons'B>lfrt<'row'<'col-sm-5'i><'col-sm-7'p>>",
-            buttons: [
-                {extend: 'csv',title:'BookingList',exportOptions: {
-                    columns: [0,5,6]
-                }},
-                {extend: 'excel', title: 'BookingList',exportOptions: {
-                    columns: [0,2,3]
-                }},
-                {extend: 'pdf', title: 'BookingList',exportOptions: {
-                    columns: [0,2,3]
-                }},
-                {
-                    extend: 'print',
-                    customize: function (win) {
-                        $(win.document.body).addClass('white-bg');
-                        $(win.document.body).css('font-size', '10px');
-                        $(win.document.body).find('table')
-                            .addClass('compact')
-                            .css('font-size', 'inherit');
-                    }
-                }
-            ]
+            order: [[0, 'desc']],
+            // pageLength: 10,
+            // lengthMenu: [10, 25, 50, 100],
+            // dom: "<'html5buttons'B>lfrt<'row'<'col-sm-5'i><'col-sm-7'p>>",
+            // buttons: [
+            //     {extend: 'csv',title:'BookingList',exportOptions: {
+            //         columns: [0,5,6]
+            //     }},
+            //     {extend: 'excel', title: 'BookingList',exportOptions: {
+            //         columns: [0,2,3]
+            //     }},
+            //     {extend: 'pdf', title: 'BookingList',exportOptions: {
+            //         columns: [0,2,3]
+            //     }},
+            //     {
+            //         extend: 'print',
+            //         customize: function (win) {
+            //             $(win.document.body).addClass('white-bg');
+            //             $(win.document.body).css('font-size', '10px');
+            //             $(win.document.body).find('table')
+            //                 .addClass('compact')
+            //                 .css('font-size', 'inherit');
+            //         }
+            //     }
+            // ]
         });
 
         $('#select_all').on('click',function(){
@@ -376,25 +390,35 @@ $session = Yii::$app->session;
 
     });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="<?= Yii::getAlias('@web') ?>/web/js/html5-qrcode.min.js"></script>
 <script>
 $(function(){
     var html5QrCode = null;
     var isScanning = false;
 
     $('#scanModal').on('shown.bs.modal', function(){
+        console.log("Modal shown event fired.");
         $(this).removeAttr('aria-hidden').attr('aria-modal','true');
         $('#qr-result').html('<div class="alert alert-warning">Starting Camera...</div>');
+        
+        if (typeof Html5Qrcode === "undefined") {
+            $('#qr-result').html('<div class="alert alert-danger">Error: Scanner Library not loaded. Check internet connection.</div>');
+            console.error("Html5Qrcode is not defined.");
+            return;
+        }
+        
         setTimeout(startQRScanner, 500);
     });
 
     $('#scanModal').on('hidden.bs.modal', function(){
+        console.log("Modal hidden event fired.");
         stopScanner();
     });
 
     function stopScanner() {
         if (html5QrCode && isScanning) {
             html5QrCode.stop().then(function(){
+                console.log("Scanner stopped.");
                 html5QrCode.clear();
                 isScanning = false;
                 $('#qr-reader').empty();

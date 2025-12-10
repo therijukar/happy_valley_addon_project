@@ -161,6 +161,8 @@ $(document).ready(function() {
         });
     });
 
+    let referralCode = new URLSearchParams(window.location.search).get('ref');
+
     $('#registerBtn').click(function() {
         let name = $('#uName').val();
         let email = $('#uEmail').val();
@@ -176,7 +178,8 @@ $(document).ready(function() {
             name: name, 
             email: email, 
             phone: phone, 
-            otp: otp
+            otp: otp,
+            referral_code: referralCode
         }, function(data) {
             if(data.status === 'success') {
                 localStorage.setItem('user_token', data.user_token);
