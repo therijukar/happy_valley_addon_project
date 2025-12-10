@@ -7,46 +7,46 @@ use yii\bootstrap\ActiveForm;
 /* @var $model app\models\Administrator */
 /* @var $form yii\widgets\ActiveForm */
 ?>
-<style>
+<div class="login-container animated fadeInDown">
+    <div class="login-card">
+        <div class="login-logo">
+            <img src="<?php echo Yii::getAlias('@web').'/web/assets/admin/'?>img/logo.png" alt="Happy Valley Park">
+        </div>
+        
+        <h3 class="login-title">Welcome Back</h3>
+        <p class="login-subtitle">Please sign in to your account</p>
 
-    .card-1 {
-        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-        transition: all 0.3s cubic-bezier(.25,.8,.25,1);
-    }
-    .card-1:hover {
-        box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
-    }
-    </style>
-<section class="body-sign">
+        <?php
+        if(isset($msg) && $msg=='Invalid')
+        {
+            echo"<div class='alert alert-danger'>Invalid Email or Password</div>";
+        }
+        if(isset($msg) && $msg=='User Type')
+        {
+            echo"<div class='alert alert-danger'>Access Denied</div>";
+        }
+        ?>
 
-
-
-
-
-    <div class="middle-box text-center loginscreen animated fadeInDown card-1" style="width: 350px; margin-top: 10%; background: #ffd2a0; padding: 20px;">
-                <h1 class="logo-name" style="margin-top: 0;"><img src="<?php echo Yii::getAlias('@web').'/web/assets/admin/'?>img/logo.png"  alt="logohvp" style="width: 45%;"></h1>
-            <?php
-            if(isset($msg) && $msg=='Invalid')
-            {
-                echo"<div class='alert alert-danger'>Please check your Email and Password!</div>";
-
-            }
-            if(isset($msg) && $msg=='User Type')
-            {
-                echo"<div class='alert alert-danger'>You aren't eligible access to this module !</div>";
-
-            }
-            ?>
-                <?php $form = ActiveForm::begin(['options' => ['class' => 'm-t']]); ?>
-                <div class="form-group">
-                    <input name="Administrator[email]" id="administrator-email" type="text" placeholder="Email" class="form-control input-lg" />
-                </div>
-                <div class="form-group">
-                    <input name="Administrator[password]" id="administrator-password" type="password" placeholder="PASSWORD" class="form-control input-lg" />
-                </div>
-                <button type="submit" class="btn btn-danger block full-width m-b">Login</button>
-               
-            <a style="color: #000; font-weight: bold;" href="<?php echo  Yii::$app->request->baseUrl;?>/admin/administrator/forgot">Forgot password ?</a>
-                <?php ActiveForm::end(); ?>
+        <?php $form = ActiveForm::begin(['options' => ['class' => 'login-form']]); ?>
+            <div class="input-group-modern">
+                <input name="Administrator[email]" id="administrator-email" type="text" class="form-control" placeholder=" " required />
+                <label for="administrator-email">Email Address</label>
+            </div>
+            
+            <div class="input-group-modern">
+                <input name="Administrator[password]" id="administrator-password" type="password" class="form-control" placeholder=" " required />
+                <label for="administrator-password">Password</label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary login-btn">Sign In</button>
+            
+            <div>
+                <a class="forgot-link" href="<?php echo Yii::$app->request->baseUrl;?>/admin/administrator/forgot">Forgot password?</a>
+            </div>
+        <?php ActiveForm::end(); ?>
     </div>
-		</section>
+    
+    <div style="text-align: center; margin-top: 20px; color: rgba(255,255,255,0.5); font-size: 12px;">
+        &copy; <?php echo date('Y'); ?> Happy Valley Park
+    </div>
+</div>

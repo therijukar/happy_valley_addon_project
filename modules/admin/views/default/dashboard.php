@@ -39,13 +39,13 @@ $session = Yii::$app->session;
     <div class="row">
         <div class="col-sm-3 ">
             <div class="ibox float-e-margins card-1">
-                <div class="ibox-title" style="background: #7266BA;">
+                <div class="ibox-title">
                     <span class="label label-success pull-right">Active</span>
-                    <h5 style="color: #fff;">Tickets</h5>
+                    <h5>Tickets</h5>
                 </div>
-                <div class="ibox-content" style="background: #7266BA;">
-                    <h1 class="no-margins" style="color: #fff;"><?php echo $ticket; ?></h1>
-                    <small style="color: #fff;">Total</small>
+                <div class="ibox-content">
+                    <h1 class="no-margins"><?php echo $ticket; ?></h1>
+                    <small>Total</small>
                 </div>
             </div>
         </div>
@@ -54,13 +54,13 @@ $session = Yii::$app->session;
 
         <div class="col-lg-3 ">
             <div class="ibox float-e-margins card-1">
-                <div class="ibox-title"  style="background:#E91E63;">
+                <div class="ibox-title">
                     <span class="label label-info pull-right">Active</span>
-                    <h5 style="color: #fff;">Restaurant</h5>
+                    <h5>Restaurant</h5>
                 </div>
-                <div class="ibox-content" style="background:#E91E63;">
-                    <h1 class="no-margins" style="color: #fff;"><?php echo $restaurant; ?></h1>
-                    <small style="color: #fff;">Total</small>
+                <div class="ibox-content">
+                    <h1 class="no-margins"><?php echo $restaurant; ?></h1>
+                    <small>Total</small>
                 </div>
             </div>
         </div>
@@ -68,26 +68,26 @@ $session = Yii::$app->session;
 
         <div class="col-lg-3 ">
             <div class="ibox float-e-margins card-1">
-                <div class="ibox-title" style="background:#FF9800;">
+                <div class="ibox-title">
                     <span class="label label-primary pull-right">Active</span>
-                    <h5 style="color: #fff;">Banquet</h5>
+                    <h5>Banquet</h5>
                 </div>
-                <div class="ibox-content" style="background:#FF9800;">
-                    <h1 class="no-margins" style="color: #fff;"><?php echo $banquet; ?></h1>
-                    <small style="color: #fff;">Total</small>
+                <div class="ibox-content">
+                    <h1 class="no-margins"><?php echo $banquet; ?></h1>
+                    <small>Total</small>
                 </div>
             </div>
         </div>
 
         <div class="col-lg-3 ">
             <div class="ibox float-e-margins card-1">
-                <div class="ibox-title" style="background:#149b36;">
+                <div class="ibox-title">
                     <span class="label label-danger pull-right">Active</span>
-                    <h5 style="color: #fff;">Picnic Spots</h5>
+                    <h5>Picnic Spots</h5>
                 </div>
-                <div class="ibox-content" style="background:#149b36;">
-                    <h1 class="no-margins" style="color: #fff;"><?php echo $picnic_spots; ?></h1>
-                    <small style="color: #fff;">Total</small>
+                <div class="ibox-content">
+                    <h1 class="no-margins"><?php echo $picnic_spots; ?></h1>
+                    <small>Total</small>
                 </div>
             </div>
         </div>

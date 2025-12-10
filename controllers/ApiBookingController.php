@@ -53,11 +53,30 @@ class ApiBookingController extends Controller
         $model->email = $params['email'] ?? null;
         $model->user_id = $user->id;
         $model->product = $params['product'] ?? null;
-        $model->date = $params['date'] ?? date('Y-m-d');
+        $model->date = $params['date'] ?? null;
+        
+        // Enforce No Same-Day Booking
+        if ($model->date <= date('Y-m-d')) {
+             return ['status' => 'error', 'message' => 'Same-day booking is not allowed. Please select a future date.'];
+        }
         
         // Detailed counts
         $model->belowtenyears = $params['belowtenyears'] ?? 0;
         $model->abovetenyears = $params['abovetenyears'] ?? 0;
+        
+        // Auto-update user profile if empty
+        $profileUpdated = false;
+        if(empty($user->full_name) && !empty($model->name)) {
+             $user->full_name = $model->name;
+             $profileUpdated = true;
+        }
+        if(empty($user->email_id) && !empty($model->email)) {
+             $user->email_id = $model->email;
+             $profileUpdated = true;
+        }
+        if($profileUpdated) {
+             $user->save();
+        }
         
         // Calculate total units if not provided (for Water World logic)
         if ($model->product == '8' || $model->product == '9') { // Water World or Combo
@@ -226,7 +245,11 @@ class ApiBookingController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
         $user = $this->getAuthenticatedUser();
         if ($user) {
-            return ['status' => 'success', 'user' => ['phone' => $user->phone]];
+            return ['status' => 'success', 'user' => [
+                'phone' => $user->phone,
+                'full_name' => $user->full_name,
+                'email_id' => $user->email_id,
+            ]];
         }
         return ['status' => 'error', 'message' => 'User not found'];
     }

@@ -4,6 +4,233 @@ $this->title = 'My Tickets - Happy Valley';
 ?>
 
 <style>
+    .dashboard-header {
+        background: #fff;
+        border-radius: 16px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .ticket-card {
+        background: white;
+        border-radius: 16px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.02);
+    }
+    .ticket-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .ticket-top {
+        background: linear-gradient(135deg, #BE151C, #991b1b);
+        padding: 20px;
+        color: white;
+        position: relative;
+    }
+    .ticket-top h5 { margin: 0; font-weight: 700; letter-spacing: 0.5px; }
+    .ticket-top small { opacity: 0.9; }
+    
+    .ticket-main {
+        padding: 20px;
+    }
+    
+    /* Punch Hole Effect */
+    .ticket-divider {
+        position: relative;
+        height: 2px;
+        border-top: 2px dashed #cbd5e1;
+        margin: 0 15px;
+    }
+    .ticket-divider::before, .ticket-divider::after {
+        content: '';
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        background-color: var(--secondary-color);
+        border-radius: 50%;
+        top: -13px;
+    }
+    .ticket-divider::before { left: -27px; }
+    .ticket-divider::after { right: -27px; }
+    
+    .ticket-stub {
+        padding: 15px;
+        background: #f8fafc;
+        text-align: center;
+    }
+    
+    .qr-box {
+        background: white;
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        display: inline-block;
+    }
+    
+    .pro-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #64748b;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+        display: block;
+    }
+    .pro-value {
+        font-size: 15px;
+        font-weight: 600;
+        color: #0f172a;
+        display: block;
+    }
+    
+    /* Empty State */
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        background: #eff6ff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        color: #2563eb;
+        font-size: 32px;
+    }
+</style>
+
+<!-- Welcome Header -->
+<div class="dashboard-header">
+    <div>
+        <h2 class="h3 fw-bold mb-1 text-dark">Hello, <span id="welcomeName">Guest</span>! 👋</h2>
+        <p class="text-muted mb-0">Here are your upcoming adventures.</p>
+    </div>
+    <a href="<?= Url::to(['client/book']) ?>" class="btn btn-primary px-4 py-2 fw-medium rounded-pill shadow-sm">
+        <i class="fas fa-plus me-2"></i>Book New Ticket
+    </a>
+</div>
+
+<!-- Loading State -->
+<div id="loading" class="text-center py-5">
+    <div class="spinner-grow text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+    <p class="mt-3 text-muted fw-medium">Fetching your tickets...</p>
+</div>
+
+<!-- Tickets Grid -->
+<div id="tickets-container" class="row g-4"></div>
+
+<!-- Empty State -->
+<div id="no-tickets" class="text-center py-5" style="display:none;">
+    <div class="empty-state-icon">
+        <i class="fas fa-ticket-alt"></i>
+    </div>
+    <h4 class="fw-bold mb-2">No Active Tickets Found</h4>
+    <p class="text-muted mb-4" style="max-width: 400px; margin: 0 auto;">It looks like you haven't booked any adventures yet. Start your journey today!</p>
+    <a href="<?= Url::to(['client/book']) ?>" class="btn btn-primary btn-lg px-5 rounded-pill shadow-sm">
+        Book Now
+    </a>
+</div>
+
+<script>
+$(document).ready(function() {
+    // 1. Fetch User Profile for Welcome Message
+    const userToken = localStorage.getItem('user_token');
+    if(userToken) {
+        $.ajax({
+            url: "<?= Url::to(['api-booking/profile']) ?>",
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + userToken },
+            success: function(res) {
+                if(res.status === 'success' && res.user && res.user.full_name) {
+                    $('#welcomeName').text(res.user.full_name);
+                } else if (res.user && res.user.phone) {
+                    $('#welcomeName').text(res.user.phone);
+                }
+            }
+        });
+    }
+
+    // 2. Fetch Tickets
+    $.ajax({
+        url: "<?= Url::to(['api-booking/history']) ?>",
+        method: 'POST', // or GET depending on controller
+        headers: { 'Authorization': 'Bearer ' + userToken },
+        success: function(data) {
+            $('#loading').hide();
+            if(data.status === 'success' && data.tickets.length > 0) {
+                let html = '';
+                data.tickets.forEach(function(ticket) {
+                    // Determine Product Name fancily if possible, else generic
+                    let prodName = "Entry Ticket";
+                    if(ticket.product == '8') prodName = "Water World";
+                    if(ticket.product == '9') prodName = "Combo Pack";
+
+                    html += `
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="ticket-card">
+                            <div class="ticket-top">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5>${prodName}</h5>
+                                        <small class="d-block mt-1 opacity-75">Happy Valley Park</small>
+                                    </div>
+                                    <i class="fas fa-check-circle fa-lg opacity-75"></i>
+                                </div>
+                            </div>
+                            <div class="ticket-main">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <span class="pro-label">Date</span>
+                                        <span class="pro-value">${ticket.date}</span>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <span class="pro-label">Ticket No</span>
+                                        <span class="pro-value" style="font-family: monospace; letter-spacing: 1px;">#${ticket.ticket_no}</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="pro-label">Admit</span>
+                                        <span class="pro-value">1 Person</span>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <span class="pro-label">Amount</span>
+                                        <span class="pro-value text-primary">₹${ticket.amount}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ticket-divider"></div>
+                            <div class="ticket-stub">
+                                <span class="pro-label mb-2">Scan at Entrance</span>
+                                <div class="qr-box shadow-sm">
+                                    <img src="${ticket.qr_code_url}" alt="QR" class="img-fluid" style="width: 100px; height: 100px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                });
+                $('#tickets-container').html(html);
+            } else {
+                $('#no-tickets').show();
+            }
+        },
+        error: function() {
+            $('#loading').hide();
+            $('#no-tickets h4').text('Could not load tickets');
+            $('#no-tickets').show();
+        }
+    });
+});
+</script>
+<style>
     .ticket-card {
         background: white;
         border-radius: 16px;

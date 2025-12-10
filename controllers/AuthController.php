@@ -12,64 +12,114 @@ class AuthController extends Controller
 {
     public $enableCsrfValidation = false;
 
-    public function actionSendOtp()
-    {
-        try {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            $request = Yii::$app->request;
-            $phone = $request->post('phone_number');
+    // --- LOGIN FLOW ---
 
-            if (empty($phone)) {
-                Yii::error("SendOTP: Phone number missing");
-                return ['status' => 'error', 'message' => 'Phone number is required'];
+    public function actionSendLoginOtp()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $phone = Yii::$app->request->post('phone_number');
+
+        if (empty($phone)) return ['status' => 'error', 'message' => 'Phone number is required'];
+
+        $user = User::findByPhone($phone);
+        if (!$user) {
+            return ['status' => 'error', 'message' => 'User not found. Please Sign Up first.'];
+        }
+
+        return $this->processSendOtp($phone);
+    }
+
+    public function actionVerifyLoginOtp()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $phone = Yii::$app->request->post('phone_number');
+        $otp = Yii::$app->request->post('entered_otp');
+        
+        if (empty($phone) || empty($otp)) return ['status' => 'error', 'message' => 'Phone and OTP are required'];
+
+        if ($this->verifyOtpInternal($phone, $otp)) {
+            $user = User::findByPhone($phone);
+            if ($user) {
+                return ['status' => 'verified', 'user_token' => $this->generateJwt($user->id)];
+            }
+        }
+        return ['status' => 'error', 'message' => 'Invalid OTP'];
+    }
+
+    // --- SIGNUP FLOW ---
+
+    public function actionSendSignupOtp()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $phone = Yii::$app->request->post('phone_number');
+
+        if (empty($phone)) return ['status' => 'error', 'message' => 'Phone number is required'];
+
+        $user = User::findByPhone($phone);
+        if ($user) {
+            return ['status' => 'error', 'message' => 'User already exists. Please Login.'];
+        }
+
+        return $this->processSendOtp($phone);
+    }
+
+    public function actionRegister() 
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $request = Yii::$app->request;
+        $phone = $request->post('phone');
+        $otp = $request->post('otp');
+        $name = $request->post('name');
+        $email = $request->post('email');
+
+        if (empty($phone) || empty($otp) || empty($name)) {
+            return ['status' => 'error', 'message' => 'Missing required fields'];
+        }
+
+        if ($this->verifyOtpInternal($phone, $otp)) {
+            // Check existence again just in case
+            if (User::findByPhone($phone)) {
+                 return ['status' => 'error', 'message' => 'User already exists'];
             }
 
-            // Generate OTP
-            $otp = rand(100000, 999999);
-            $expiry = time() + 300; // 5 minutes
+            $user = new User();
+            $user->phone = $phone;
+            $user->full_name = $name;
+            $user->email_id = $email;
+            if ($user->save()) {
+                return ['status' => 'success', 'user_token' => $this->generateJwt($user->id)];
+            } else {
+                return ['status' => 'error', 'message' => 'Registration failed: ' . json_encode($user->errors)];
+            }
+        }
+        return ['status' => 'error', 'message' => 'Invalid OTP'];
+    }
 
-            // Store OTP in DB
-            $connection = Yii::$app->db;
-            $connection->createCommand()->insert('otp_store', [
-                'phone' => $phone,
-                'otp' => $otp,
-                'expiry' => $expiry,
-                'is_verified' => 0,
-                'created_at' => time()
+    // --- HELPERS ---
+
+    private function processSendOtp($phone)
+    {
+        try {
+            $otp = rand(100000, 999999);
+            $expiry = time() + 300; 
+
+            Yii::$app->db->createCommand()->insert('otp_store', [
+                'phone' => $phone, 'otp' => $otp, 'expiry' => $expiry, 'is_verified' => 0, 'created_at' => time()
             ])->execute();
             
             Yii::info("SendOTP: OTP generated for $phone: $otp");
-
-            // Send OTP via Fast2SMS
             $res = $this->sendFast2Sms($phone, $otp);
 
-            if ($res) {
-                Yii::info("SendOTP: SMS sent successfully to $phone");
-                return ['status' => 'success', 'message' => 'OTP sent successfully'];
-            } else {
-                Yii::error("SendOTP: SMS failed for $phone");
-                return ['status' => 'error', 'message' => 'Failed to send OTP'];
-            }
+            if ($res) return ['status' => 'success', 'message' => 'OTP sent successfully']; //, 'otp_dev' => $otp]; // remove dev otp in prod
+            else return ['status' => 'error', 'message' => 'Failed to send OTP'];
         } catch (\Exception $e) {
-            Yii::error("SendOTP Exception: " . $e->getMessage());
             return ['status' => 'error', 'message' => $e->getMessage()];
         }
     }
 
-    public function actionVerifyOtp()
+    private function verifyOtpInternal($phone, $otp)
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        $request = Yii::$app->request;
-        $phone = $request->post('phone_number');
-        $otp = $request->post('entered_otp');
-        
-        if (empty($phone) || empty($otp)) {
-            return ['status' => 'error', 'message' => 'Phone and OTP are required'];
-        }
-
-        // Verify OTP
         $otpRecord = (new \yii\db\Query())
-            ->select('*')
             ->from('otp_store')
             ->where(['phone' => $phone, 'otp' => $otp, 'is_verified' => 0])
             ->andWhere(['>', 'expiry', time()])
@@ -77,70 +127,63 @@ class AuthController extends Controller
             ->one();
 
         if ($otpRecord) {
-            // Mark OTP as verified
             Yii::$app->db->createCommand()
                 ->update('otp_store', ['is_verified' => 1], ['id' => $otpRecord['id']])
                 ->execute();
-
-            // Find or Create User
-            $user = User::findByPhone($phone);
-            if (!$user) {
-                $user = new User();
-                $user->phone = $phone;
-                $user->save();
-            }
-
-            // Generate JWT
-            $key = 'happyvalley_secret_key'; // Should be in config
-            $payload = [
-                'iss' => 'http://gohappyvalley.com',
-                'aud' => 'http://gohappyvalley.com',
-                'iat' => time(),
-                'exp' => time() + (60 * 60 * 24 * 30), // 30 days
-                'sub' => $user->id
-            ];
-            $jwt = JWT::encode($payload, $key, 'HS256');
-
-            return ['status' => 'verified', 'user_token' => $jwt];
-        } else {
-            return ['status' => 'failed', 'message' => 'Invalid or expired OTP'];
+            return true;
         }
+        return false;
+    }
+
+    private function generateJwt($userId) 
+    {
+        $key = 'happyvalley_secret_key'; 
+        $payload = [
+            'iss' => 'http://gohappyvalley.com',
+            'aud' => 'http://gohappyvalley.com',
+            'iat' => time(),
+            'exp' => time() + (60 * 60 * 24 * 30), 
+            'sub' => $userId
+        ];
+        return JWT::encode($payload, $key, 'HS256');
     }
 
     private function sendFast2Sms($phone, $otp)
     {
         $apiKey = 'RSyJt9aO7pfXx05sUqwDW4IiYQ3bECGNVKHLTuvncA6zgeZ1kmpTbhaQs8Hy2ZLOBMDFlJY4R96SoiIq';
-        $message = "Your OTP is: $otp"; 
         
-        // Fast2SMS API (Bulk V2)
+        // Fast2SMS API (Bulk V2) with DLT parameters
+        // URL: https://www.fast2sms.com/dev/bulkV2?authorization=...&route=dlt&sender_id=RYLTHR&message=167170&variables_values=1234&flash=0&numbers=...
         $url = "https://www.fast2sms.com/dev/bulkV2";
-        // Using route 'q' (Quick) for generic content as no DLT template ID was provided for Login
+        
         $data = [
-            'message' => $message,
-            'language' => 'english',
-            'route' => 'q', 
+            'authorization' => $apiKey,
+            'route' => 'dlt',
+            'sender_id' => 'RYLTHR',
+            'message' => '167170',
+            'variables_values' => $otp, // Variable for the OTP in the template
+            'flash' => 0,
             'numbers' => $phone,
         ];
 
-        // Use CURL with robust options
+        // Use CURL
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-            "authorization: $apiKey"
-        ));
+        // Determine URL with query params
+        $urlWithParams = $url . '?' . http_build_query($data);
+        
+        curl_setopt($ch, CURLOPT_URL, $urlWithParams);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // As requested implicitly by robustness needs
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        // The user request shows GET request format in the URL example provided
+        curl_setopt($ch, CURLOPT_HTTPGET, true); 
         
         $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         $json = json_decode($response, true);
-        Yii::info("Fast2SMS Response: " . $response, 'sms');
+        Yii::info("Fast2SMS DLT Response ($phone): " . $response, 'sms');
         
         return isset($json['return']) && $json['return'] == true;
     }

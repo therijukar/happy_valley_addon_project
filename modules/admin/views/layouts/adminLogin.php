@@ -1,39 +1,29 @@
 <?php
-
-/* @var $this \yii\web\View */
-/* @var $content string */
-
 use yii\helpers\Html;
-use app\assets\AppAdminAsset;
-AppAdminAsset::register($this);
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
 <html lang="<?= Yii::$app->language ?>">
 <head>
     <meta charset="<?= Yii::$app->charset ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
-    <link rel="stylesheet" href="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/css/animate.css"/>
-    <link rel="stylesheet" href="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/css/style.css"/>
-    <link href="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/font-awesome/css/font-awesome.css" rel="stylesheet">
-
-    <!-- Head Libs -->
-		<link rel="shortcut icon" href="<?php echo Yii::getAlias('@web').'/web/assets/admin'?>/img/fav.png"/>
-    <?= Html::csrfMetaTags() ?>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title><?= Html::encode($this->title) ?></title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="<?php echo Yii::getAlias('@web') . '/web/css/admin-v2.css?v=1.3' ?>"/>
+    
+    <?= Html::csrfMetaTags() ?>
     <?php $this->head() ?>
 </head>
-<body class="gray-bg" style="height: auto; background-image: url('<?php echo Yii::getAlias('@web').'/web/assets/admin'?>/img/hvp.jpg'); background-repeat: no-repeat;background-size: cover;">
-<!-- -------- body start  -->
+<body class="login-page">
 <?php $this->beginBody() ?>
-<?= $content ?>
 
-<!-- -------- body end  -->
-
-<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/jquery-2.1.1.js"></script>
-<script src="<?php echo Yii::getAlias('@web') . '/web/assets/admin' ?>/js/bootstrap.min.js"></script>
+    <?= $content ?>
 
 <?php $this->endBody() ?>
 </body>

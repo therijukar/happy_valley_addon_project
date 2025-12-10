@@ -1,4 +1,7 @@
 Yii 2 Basic Project Template
+http://localhost:8089
+php -S 127.0.0.1:8089 router.php
+
 ============================
 
 Yii 2 Basic Project Template is a skeleton [Yii 2](http://www.yiiframework.com/) application best for

@@ -27,9 +27,14 @@ class HolidayController extends \yii\web\Controller
             ],
         ]);
 
+        // Fetch dynamic ticket types for the dropdown
+        $tickets = \app\models\Pricing::find()->select(['product_code', 'name'])->asArray()->all();
+        $ticketTypes = \yii\helpers\ArrayHelper::map($tickets, 'product_code', 'name');
+
         return $this->render('index', [
             'dataProvider' => $dataProvider,
-            'model' => $model
+            'model' => $model,
+            'ticketTypes' => $ticketTypes
         ]);
     }
 

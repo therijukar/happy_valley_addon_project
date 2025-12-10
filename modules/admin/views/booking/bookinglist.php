@@ -11,21 +11,8 @@ use yii\widgets\ActiveForm;
 $session = Yii::$app->session;
 ?>
 
-<div class="row wrapper border-bottom white-bg page-heading">
-    <div class="col-lg-10">
-        <h2>Booking</h2>
-        <ol class="breadcrumb">
-            <li>
-                <a href="#">Home</a>
-            </li>
-            <li class="active">
-                <strong>Booking</strong>
-            </li>
-        </ol>
-    </div>
-    <div class="col-lg-2">
-
-    </div>
+<div class="page-title">
+    Booking Management
 </div>
 
 <!-- start: page -->
@@ -37,10 +24,10 @@ $session = Yii::$app->session;
 <!-- FLASH MESSAGE ENDS HERE -->
 
 
-<div class="wrapper wrapper-content animated fadeInRight">
+<div class="wrapper wrapper-content animated fadeInRight" style="padding: 0;">
     <div class="row">
         <div class="col-lg-12">
-            <div class="ibox float-e-margins">
+            <div class="ibox">
                 <div class="ibox-title">
                     <h5>All Bookings</h5>
                     <div style="float:right">

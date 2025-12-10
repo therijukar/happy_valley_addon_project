@@ -135,15 +135,51 @@ use yii\helpers\Url;
             .main-content { max-width: 1000px; padding: 40px; margin: 0; }
         }
         
+        /* Sidebar Styling Refinement */
+        .sidebar {
+            background: white;
+            border-right: 1px solid #f1f5f9;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.02);
+        }
+        
+        .sidebar .nav-link-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            color: #64748b;
+            text-decoration: none;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar .nav-link-item:hover {
+            background-color: #f8fafc;
+            color: var(--primary-color);
+        }
+        .sidebar .nav-link-item.active {
+            background-color: #eff6ff; /* Light blue bg */
+            color: var(--primary-color);
+        }
+        .sidebar .nav-link-item i {
+            width: 24px;
+        }
+        
+        /* Mobile Bottom Nav Active State */
+        .nav-item-link { opacity: 0.6; }
+        .nav-item-link.active {
+            opacity: 1;
+            color: var(--primary-color);
+        }
+        
         /* Utility */
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+        .btn-primary { 
+            background-color: #BE151C !important; 
+            border-color: #BE151C !important; 
         }
-        .btn-primary:active, .btn-primary:focus, .btn-primary:hover {
-            background-color: #1d4ed8;
-            border-color: #1d4ed8;
-        }
+        .btn-primary:hover { background-color: #a01217 !important; }
+        .text-primary { color: #BE151C !important; }
     </style>
     <?php $this->head() ?>
 </head>
@@ -156,12 +192,12 @@ use yii\helpers\Url;
         <i class="fas fa-mountain-sun me-2"></i> Happy Valley
     </a>
     
-    <div class="nav flex-column gap-2 mb-auto">
-        <a href="<?= Url::to(['client/dashboard']) ?>" class="btn text-start <?= Yii::$app->controller->action->id == 'dashboard' ? 'btn-primary text-white' : 'btn-light text-dark' ?>">
-            <i class="fas fa-ticket-alt me-2"></i> My Tickets
+    <div class="nav flex-column mb-auto mt-2">
+        <a href="<?= Url::to(['client/dashboard']) ?>" class="nav-link-item <?= Yii::$app->controller->action->id == 'dashboard' ? 'active' : '' ?>">
+            <i class="fas fa-ticket-alt me-3"></i> My Tickets
         </a>
-        <a href="<?= Url::to(['client/book']) ?>" class="btn text-start <?= Yii::$app->controller->action->id == 'book' ? 'btn-primary text-white' : 'btn-light text-dark' ?>">
-            <i class="fas fa-plus-circle me-2"></i> Book New Ticket
+        <a href="<?= Url::to(['client/book']) ?>" class="nav-link-item <?= Yii::$app->controller->action->id == 'book' ? 'active' : '' ?>">
+            <i class="fas fa-plus-circle me-3"></i> Book New Ticket
         </a>
     </div>
 

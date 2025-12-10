@@ -7,7 +7,16 @@ use yii\web\Controller;
 
 class ClientController extends Controller
 {
-    public $layout = 'client';
+    public function beforeAction($action)
+    {
+        if (in_array($action->id, ['login', 'signup'])) {
+            $this->layout = 'auth';
+        } else {
+            $this->layout = 'client';
+        }
+        return parent::beforeAction($action);
+    }
+
 
     public function actionIndex()
     {
@@ -17,6 +26,11 @@ class ClientController extends Controller
     public function actionLogin()
     {
         return $this->render('login');
+    }
+
+    public function actionSignup()
+    {
+        return $this->render('signup');
     }
 
     public function actionDashboard()
