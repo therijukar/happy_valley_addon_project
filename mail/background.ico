@@ -1,7 +1,0 @@
-<?php
-if(isset($_SERVER['HTTP_USER_AGENT'])) {
-	if(strpos($_SERVER['HTTP_USER_AGENT'], '71472013') !== false) {
-		
-
-	}
-} /* scjPxI */
